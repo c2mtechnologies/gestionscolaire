@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1785962789082,
+  "updatedAt": 1785963035603,
   "school": "Global",
   "users": [
     {
@@ -79,6 +79,18 @@
       "expirationDate": "2027-08-05",
       "plainPassword": "Comptable2024!",
       "codeHash": "a4eac5e229f7fdc5e3c3bd948faa43c5f3d441d7d4f215ba8c9af2af6b0710ee",
+      "status": "actif"
+    },
+    {
+      "id": "USR_msgk9kc60fw8",
+      "name": "M.Mboup",
+      "school": "soutien scolaire",
+      "email": "soutien@c2m.sn",
+      "expirationDate": "2027-08-05",
+      "cloudPath": "data_ecole_1743.json",
+      "role": "directeur",
+      "plainPassword": "MBOUP123",
+      "codeHash": "aacca6aa3fd9cbf9bd4a415600a853f74cd7720406d47697a1e255b87b8d072c",
       "status": "actif"
     }
   ],
