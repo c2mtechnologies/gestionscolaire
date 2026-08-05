@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1785963035603,
+  "updatedAt": 1785966533170,
   "school": "Global",
   "users": [
     {
@@ -92,6 +92,16 @@
       "plainPassword": "MBOUP123",
       "codeHash": "aacca6aa3fd9cbf9bd4a415600a853f74cd7720406d47697a1e255b87b8d072c",
       "status": "actif"
+    },
+    {
+      "id": "USR_msgkcss1lmjd",
+      "name": "Cherif Diop",
+      "email": "enseignant89@c2m.sn",
+      "role": "enseignant",
+      "school": "soutien scolaire",
+      "plainPassword": "Prof2024",
+      "codeHash": "d70f032fc5518c2b139277e31593a7566a56586c72e6f887cebf485889a2fd1b",
+      "status": "actif"
     }
   ],
   "students": [
@@ -104,10 +114,45 @@
       "parent": "Daouda Fall",
       "phone": "707528905",
       "teacherName": ""
+    },
+    {
+      "id": "STU_msgkgnyrzmsc",
+      "name": "Moussa Seck",
+      "class": "CM1",
+      "school": "soutien scolaire",
+      "matricule": "MAT-9430",
+      "parent": "Samba Seck",
+      "phone": "709872645",
+      "teacherName": "Cherif Diop"
     }
   ],
-  "schedules": [],
-  "grades": [],
+  "schedules": [
+    {
+      "id": "SCH_msgkhxhz9gs0",
+      "class": "CM1",
+      "school": "soutien scolaire",
+      "day": "Lundi",
+      "start": "08:00",
+      "end": "10:00",
+      "subject": "Français",
+      "teacher": "Cherif Diop",
+      "room": "04"
+    }
+  ],
+  "grades": [
+    {
+      "id": "GRD_msgkkiwkp48p",
+      "studentId": "STU_msgkgnyrzmsc",
+      "studentName": "Moussa Seck",
+      "class": "CM1",
+      "school": "soutien scolaire",
+      "subject": "Français",
+      "valeur": 15,
+      "coef": 1,
+      "term": "Trimestre 1",
+      "comment": "Bon trimestre"
+    }
+  ],
   "logbook": [],
   "absences": [],
   "cash": [
@@ -124,7 +169,17 @@
       "cashierName": "M. Sene"
     }
   ],
-  "teachers": [],
+  "teachers": [
+    {
+      "id": "TCH_msgker67autb",
+      "name": "Cherif Diop",
+      "school": "soutien scolaire",
+      "specialty": "français",
+      "classes": "c03",
+      "phone": "708976543",
+      "email": "mbcoraye@yahoo.fr"
+    }
+  ],
   "homework": [],
   "messages": [],
   "appointments": [],
