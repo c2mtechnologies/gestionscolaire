@@ -1,0 +1,88 @@
+{
+  "updatedAt": 1785959369971,
+  "school": "C2M Holding & Logiciels",
+  "users": [
+    {
+      "id": "USR_creator_master",
+      "name": "Cora Mboup (Créateur Maître)",
+      "email": "coramboup72@gmail.com",
+      "role": "createur",
+      "school": "C2M Holding & Logiciels",
+      "codeHash": "bd1ed0b97d5c875020764882c48d13992c701ab980a1a86d3fcc9e2411d6792d",
+      "status": "actif",
+      "subscriptionStatus": "Payant",
+      "createdAt": "03/08/2026",
+      "expirationDate": "2099-12-31"
+    },
+    {
+      "id": "USR_directeur_sane",
+      "name": "Mr. Sane (Directeur C2M Parcelles)",
+      "email": "directeur@c2m.sn",
+      "role": "",
+      "school": "École C2M Parcelles Assainies Unité 7",
+      "codeHash": "86eeca78b6837646300e24fe57a7c6e0ad76f31e3fbe203d9d7c52078a9f63f0",
+      "status": "actif",
+      "subscriptionStatus": "Gratuit",
+      "createdAt": "03/08/2026",
+      "expirationDate": "2027-08-03",
+      "cloudPath": "data.json",
+      "plainPassword": "DIR2024"
+    },
+    {
+      "id": "USR_msghudg6axnh",
+      "name": "M. Sané",
+      "email": "enseignant@c2m.sn",
+      "role": "enseignant",
+      "school": "École C2M Parcelles Assainies Unité 7",
+      "plainPassword": "Enseignant2026!",
+      "codeHash": "9d0c061a8178803b4ee37e8aa549ca8ee0aed9d49e9e2f702a94c7dc0b622f20",
+      "status": "actif"
+    },
+    {
+      "id": "USR_msghvjb0h6ok",
+      "name": "M. Diallo",
+      "email": "comptable@c2m.sn",
+      "role": "comptable",
+      "school": "École C2M Parcelles Assainies Unité 7",
+      "plainPassword": "Comptable2026!",
+      "codeHash": "06f65362d19fe1de58133b2937c9ac0ea2edb6b7cbdd9c330c36c8d8436a68f5",
+      "status": "actif"
+    },
+    {
+      "id": "USR_msgi16az6bmz",
+      "name": "M.Sané",
+      "school": "Ecole C2M Unité 7",
+      "email": "directeur@c2m.sn",
+      "expirationDate": "2027-08-05",
+      "cloudPath": "data_ecole_0380.json",
+      "role": "directeur",
+      "plainPassword": "Directeur2026!",
+      "codeHash": "58eb6f368a2800bcd0dc612526195a7f801fe19ec416505166c1bb3839312371",
+      "status": "actif"
+    }
+  ],
+  "students": [
+    {
+      "id": "STU1001",
+      "name": "Djamal Mboup",
+      "class": "CM2",
+      "matricule": "MAT88421",
+      "dob": "2015-05-12",
+      "parent": "Mr. Ba & Aissatou Diop",
+      "phone": "+221 77 000 00 00",
+      "email": "djamal@c2m.sn",
+      "school": "École C2M Parcelles Assainies Unité 7",
+      "createdAt": "03/08/2026"
+    }
+  ],
+  "schedules": [],
+  "grades": [],
+  "logbook": [],
+  "absences": [],
+  "cash": [],
+  "teachers": [],
+  "homework": [],
+  "messages": [],
+  "appointments": [],
+  "events": []
+}
