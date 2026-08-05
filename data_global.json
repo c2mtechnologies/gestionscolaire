@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1785962181956,
+  "updatedAt": 1785962819131,
   "school": "Direction Centrale C2M",
   "users": [
     {
@@ -33,8 +33,8 @@
       "role": "enseignant",
       "school": "École C2M Unité 7",
       "expirationDate": "2027-08-05",
-      "plainPassword": "Enseignant2026!",
-      "codeHash": "9d0c061a8178803b4ee37e8aa549ca8ee0aed9d49e9e2f702a94c7dc0b622f20",
+      "plainPassword": "Enseignant2024!",
+      "codeHash": "e80d309153c9c561666ce3f6b8c448f137b0421bd6091a1a17a660e8e81b3044",
       "status": "actif"
     },
     {
@@ -77,17 +77,41 @@
       "role": "comptable",
       "school": "École C2M Unité 7",
       "expirationDate": "2027-08-05",
-      "plainPassword": "Comptable2026!",
-      "codeHash": "06f65362d19fe1de58133b2937c9ac0ea2edb6b7cbdd9c330c36c8d8436a68f5",
+      "plainPassword": "Comptable2024!",
+      "codeHash": "a4eac5e229f7fdc5e3c3bd948faa43c5f3d441d7d4f215ba8c9af2af6b0710ee",
       "status": "actif"
     }
   ],
-  "students": [],
+  "students": [
+    {
+      "id": "STU_msgju5r7cafu",
+      "name": "Ameth Fall",
+      "class": "CE2",
+      "school": "École C2M Unité 7",
+      "matricule": "MAT-9604",
+      "parent": "Daouda Fall",
+      "phone": "707528905",
+      "teacherName": ""
+    }
+  ],
   "schedules": [],
   "grades": [],
   "logbook": [],
   "absences": [],
-  "cash": [],
+  "cash": [
+    {
+      "id": "CSH_msgjutgsjovf",
+      "recuNum": "REC-2026-485",
+      "type": "entree",
+      "amount": 10000,
+      "school": "École C2M Unité 7",
+      "description": "Inscription",
+      "studentId": "STU_msgju5r7cafu",
+      "studentName": "Ameth Fall",
+      "date": "2026-08-05",
+      "cashierName": "M. Sene"
+    }
+  ],
   "teachers": [],
   "homework": [],
   "messages": [],
