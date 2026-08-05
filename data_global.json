@@ -1,0 +1,96 @@
+{
+  "updatedAt": 1785962181956,
+  "school": "Direction Centrale C2M",
+  "users": [
+    {
+      "id": "USR_CREATOR",
+      "name": "Cora Mboup",
+      "email": "coramboup72@gmail.com",
+      "role": "createur",
+      "school": "Direction Centrale C2M",
+      "cloudPath": "data_global.json",
+      "expirationDate": "2099-12-31",
+      "plainPassword": "CoraMaster2026!",
+      "codeHash": "bd1ed0b97d5c875020764882c48d13992c701ab980a1a86d3fcc9e2411d6792d",
+      "status": "actif"
+    },
+    {
+      "id": "USR_DIR_DEMO",
+      "name": "M. Sene",
+      "email": "directeur@c2m.sn",
+      "role": "directeur",
+      "school": "École C2M Unité 7",
+      "cloudPath": "data_ecole_unite7.json",
+      "expirationDate": "2027-08-05",
+      "plainPassword": "DIR2026",
+      "codeHash": "8e4900ebd6219c4ff2bde59f826c8c76031e2e33c22cb2c02c660ca48f8b1135",
+      "status": "actif"
+    },
+    {
+      "id": "USR_ENS_DEMO",
+      "name": "Mme Ndiaye",
+      "email": "enseignant@c2m.sn",
+      "role": "enseignant",
+      "school": "École C2M Unité 7",
+      "expirationDate": "2027-08-05",
+      "plainPassword": "Enseignant2026!",
+      "codeHash": "9d0c061a8178803b4ee37e8aa549ca8ee0aed9d49e9e2f702a94c7dc0b622f20",
+      "status": "actif"
+    },
+    {
+      "id": "USR_ELEVE_DEMO",
+      "name": "Fatou Diop",
+      "email": "eleve@c2m.sn",
+      "role": "eleve",
+      "school": "École C2M Unité 7",
+      "expirationDate": "2027-08-05",
+      "plainPassword": "Eleve2026!",
+      "codeHash": "16e6be44c687d738559fe51d8c5eb685915f13a3f4571935ac6395f3cf86ad7e",
+      "status": "actif"
+    },
+    {
+      "id": "USR_CPE_DEMO",
+      "name": "M. Fall",
+      "email": "cpe@c2m.sn",
+      "role": "cpe",
+      "school": "École C2M Unité 7",
+      "expirationDate": "2027-08-05",
+      "plainPassword": "Cpe2026!",
+      "codeHash": "7ab0b2830b1e0281834641a2f518197eadc4972e97a22970e6231e447307b0fd",
+      "status": "actif"
+    },
+    {
+      "id": "USR_SURV_DEMO",
+      "name": "Mme Ba",
+      "email": "surveillant@c2m.sn",
+      "role": "surveillance",
+      "school": "École C2M Unité 7",
+      "expirationDate": "2027-08-05",
+      "plainPassword": "Surveillant2026!",
+      "codeHash": "3ff953a263f3d12b1717094cd13f5e65c1e78e4eccc66223ff6c6b5f77b40d44",
+      "status": "actif"
+    },
+    {
+      "id": "USR_COMPTA_DEMO",
+      "name": "M. Diallo",
+      "email": "comptable@c2m.sn",
+      "role": "comptable",
+      "school": "École C2M Unité 7",
+      "expirationDate": "2027-08-05",
+      "plainPassword": "Comptable2026!",
+      "codeHash": "06f65362d19fe1de58133b2937c9ac0ea2edb6b7cbdd9c330c36c8d8436a68f5",
+      "status": "actif"
+    }
+  ],
+  "students": [],
+  "schedules": [],
+  "grades": [],
+  "logbook": [],
+  "absences": [],
+  "cash": [],
+  "teachers": [],
+  "homework": [],
+  "messages": [],
+  "appointments": [],
+  "events": []
+}
