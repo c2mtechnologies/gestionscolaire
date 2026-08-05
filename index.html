@@ -1,0 +1,3906 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2M Gestion Scolaire — Plateforme Unifiée & Synchronisée</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CryptoJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- SheetJS / XLSX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF & AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0E2A46;
+            --primary-light: #1e5a96;
+            --secondary: #2ecc71;
+            --accent: #f39c12;
+            --danger: #e74c3c;
+            --light: #f6f8fa;
+            --dark: #16232f;
+            --border: #e1e8ee;
+        }
+
+        body {
+            font-family: 'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #1b5da6 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        .input-std {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease-in-out;
+            background-color: #ffffff;
+        }
+        .input-std:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(30, 90, 150, 0.15);
+        }
+
+        .btn-main {
+            background-color: var(--primary-light);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-main:hover { background-color: #154a7a; }
+
+        .btn-sec {
+            background-color: var(--secondary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-sec:hover { background-color: #27ae60; }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-danger:hover { background-color: #c0392b; }
+
+        .btn-table-action {
+            padding: 5px 10px !important;
+            font-size: 12px !important;
+            border-radius: 6px;
+            margin-right: 4px;
+        }
+
+        .nav-tab-btn {
+            padding: 12px 20px;
+            background: white;
+            color: var(--dark);
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            border: 1px solid transparent;
+        }
+        .nav-tab-btn:hover { background: #edf2f7; }
+        .nav-tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary-light);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(14, 42, 70, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            background: white;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .badge-primary { background: #e2e8f0; color: var(--primary); }
+        .badge-secondary { background: #e1f5ee; color: #0c7a5e; }
+        .badge-danger { background: #fdecec; color: #b23a3a; }
+
+        .alert-box {
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert-box.active { display: block; }
+        .alert-error { background: #fdecec; color: #b23a3a; border: 1px solid #f8b4b4; }
+        .alert-success { background: #e1f5ee; color: #0c7a5e; border: 1px solid #9ae6b4; }
+
+        .import-export-card {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body class="p-3 md:p-6">
+
+<div id="loginScreen" class="max-w-md mx-auto my-auto bg-white p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-100">
+    <div class="text-center mb-8">
+        <div class="text-3xl font-extrabold text-slate-800 tracking-tight">📚 C2M Gestion Scolaire</div>
+        <p class="text-xs text-slate-500 mt-2 font-medium">Plateforme Unifiée Multi-Établissements</p>
+    </div>
+
+    <div id="loginAlertMessage" class="alert-box"></div>
+
+    <form onsubmit="handleLogin(event)" class="space-y-5">
+        <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Identifiant / Email</label>
+            <input type="email" id="loginEmail" class="input-std" placeholder="votre-email@etablissement.sn" required>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Mot de passe / Code d'accès</label>
+            <input type="password" id="passwordInput" class="input-std" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn-main w-full justify-center py-3 text-base shadow-lg shadow-blue-900/20">
+            🔓 Connexion Sécurisée
+        </button>
+    </form>
+</div>
+
+<div id="dashboard" class="hidden app-container">
+    <div class="bg-white p-6 rounded-2xl shadow-md mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-slate-100">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <span>📚 C2M Gestion Scolaire</span>
+            </h1>
+            <p id="currentTime" class="text-xs text-slate-500 mt-1 font-semibold"></p>
+        </div>
+
+        <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+            <div class="text-right">
+                <p id="userName" class="font-bold text-slate-800 text-sm"></p>
+                <small id="userRole" class="text-xs font-semibold text-slate-500 block"></small>
+                <small id="userSchool" class="text-xs font-bold text-amber-600 block"></small>
+                <small id="userExpirationBadge" class="text-xs font-bold text-emerald-600 block"></small>
+            </div>
+            <button onclick="logout()" class="btn-danger text-xs px-4 py-2">🚪 Déconnexion</button>
+        </div>
+    </div>
+
+    <div id="alertMessage" class="alert-box"></div>
+
+    <!-- TAB BUTTONS -->
+    <div id="navTabs" class="flex flex-wrap gap-2 mb-6"></div>
+
+    <!-- ================= SECTIONS DES MODULES ================= -->
+
+    <div id="accueil" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100 flex items-center gap-2">
+            <span>🏠 Tableau de Bord & Vue d'Ensemble</span>
+        </h2>
+        
+        <div id="statsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+
+        <div id="schoolExpirationInfo" class="hidden mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold">
+            <span id="schoolExpirationText"></span>
+        </div>
+
+        <div class="p-5 bg-slate-50 border border-slate-200 rounded-xl">
+            <h3 class="font-bold text-slate-800 text-sm mb-2">Bienvenue sur votre plateforme académique unifiée</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Ce système complet vous permet d'effectuer la gestion quotidienne de votre établissement : élèves, emplois du temps, absences, notes et bulletins imprimables, cahier de textes, transactions de caisse ainsi que la communication avec le personnel et les parents. Les informations saisies sont isolées par établissement et synchronisées en temps réel.
+            </p>
+        </div>
+    </div>
+
+    <div id="creatorMaster" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">
+            🛡️ Espace Administration Central : Établissements & Expiration
+        </h2>
+        
+        <div class="mb-6 flex justify-between items-center">
+            <button onclick="openAdminModal()" class="btn-main">➕ Créer un Directeur / Établissement</button>
+        </div>
+
+        <div class="overflow-x-auto mb-6">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Nom Directeur</th>
+                        <th class="p-3">Établissement</th>
+                        <th class="p-3">Email</th>
+                        <th class="p-3">Date d'Expiration</th>
+                        <th class="p-3">Prolongation Rapide</th>
+                        <th class="p-3">Statut</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="creatorAdminsTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="eleves" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">👥 Gestion des Élèves</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button id="btnAddStudent" onclick="openStudentModal()" class="btn-main">➕ Ajouter un élève</button>
+            <input type="text" id="searchStudent" onkeyup="filterStudents()" placeholder="🔍 Rechercher un élève..." class="input-std max-w-xs">
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Matricule</th>
+                        <th class="p-3">Nom & Prénom</th>
+                        <th class="p-3">Classe</th>
+                        <th class="p-3">Parents / Tuteurs</th>
+                        <th class="p-3">Téléphone</th>
+                        <th class="p-3">Actions & Fiches</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="import-export-card">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">📁 Importation & Exportation (Élèves)</h3>
+            <div class="flex flex-wrap items-center gap-3">
+                <input type="file" id="studentImportFile" accept=".csv, .xlsx" class="text-xs">
+                <button onclick="previewStudentImport()" class="btn-main text-xs">📥 Importer</button>
+                <div class="ml-auto flex gap-2">
+                    <button onclick="exportStudentList('xlsx')" class="btn-sec text-xs">📊 Exporter Excel</button>
+                    <button onclick="exportStudentList('csv')" class="btn-sec text-xs">📄 Exporter CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="emplois" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">⏰ Emplois du Temps</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button id="btnAddSchedule" onclick="openScheduleModal()" class="btn-main">➕ Créer un créneau</button>
+            <select id="scheduleClassSelect" onchange="filterSchedules()" class="input-std max-w-xs">
+                <option value="">-- Toutes les classes --</option>
+            </select>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Classe</th>
+                        <th class="p-3">Jour</th>
+                        <th class="p-3">Horaire</th>
+                        <th class="p-3">Matière</th>
+                        <th class="p-3">Enseignant</th>
+                        <th class="p-3">Salle</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="import-export-card">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">📁 Importation & Exportation (Emplois du Temps)</h3>
+            <div class="flex flex-wrap items-center gap-3">
+                <input type="file" id="scheduleImportFile" accept=".csv, .xlsx" class="text-xs">
+                <button onclick="previewScheduleImport()" class="btn-main text-xs">📥 Importer</button>
+                <div class="ml-auto flex gap-2">
+                    <button onclick="exportScheduleList('pdf')" class="btn-sec text-xs">📄 Exporter PDF</button>
+                    <button onclick="exportScheduleList('xlsx')" class="btn-sec text-xs">📊 Exporter Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notes" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">🎓 Notes & Bulletins Trimestriels</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button id="btnAddGrade" onclick="openGradeModal()" class="btn-main">➕ Saisir une note</button>
+            <div class="flex gap-2">
+                <select id="gradeClassFilter" onchange="filterGrades()" class="input-std text-xs">
+                    <option value="">-- Filtrer par Classe --</option>
+                </select>
+                <select id="gradeTermFilter" onchange="filterGrades()" class="input-std text-xs">
+                    <option value="">-- Tous les Trimestres --</option>
+                    <option value="Trimestre 1">Trimestre 1</option>
+                    <option value="Trimestre 2">Trimestre 2</option>
+                    <option value="Trimestre 3">Trimestre 3</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Élève</th>
+                        <th class="p-3">Classe</th>
+                        <th class="p-3">Matière</th>
+                        <th class="p-3">Note / 20</th>
+                        <th class="p-3">Coefficient</th>
+                        <th class="p-3">Trimestre</th>
+                        <th class="p-3">Appréciation</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="gradeTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h4 class="font-bold text-slate-800 text-sm">📜 Génération du Bulletin Officiel</h4>
+                <p class="text-xs text-slate-600">Téléchargez le bulletin trimestriel au format PDF ou Word.</p>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <select id="bulletinStudentSelect" class="input-std text-xs">
+                    <option value="">-- Sélectionner l'élève --</option>
+                </select>
+                <button onclick="generateStudentBulletinPDF()" class="btn-main text-xs whitespace-nowrap">📄 Bulletin PDF</button>
+                <button onclick="generateStudentBulletinWord()" class="btn-sec text-xs whitespace-nowrap bg-blue-700 hover:bg-blue-800 text-white">📝 Bulletin Word</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cahier" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">📚 Cahier de Textes</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button onclick="openLogbookModal()" class="btn-main">➕ Renseigner une séance de cours</button>
+            <select id="logbookClassFilter" onchange="filterLogbook()" class="input-std max-w-xs">
+                <option value="">-- Toutes les classes --</option>
+            </select>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Date & Heure</th>
+                        <th class="p-3">Classe</th>
+                        <th class="p-3">Matière</th>
+                        <th class="p-3">Enseignant</th>
+                        <th class="p-3">Contenu de la séance</th>
+                        <th class="p-3">Devoir à faire</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="logbookTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="absences" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">📝 Registre des Absences et Retards</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button onclick="openAbsenceModal()" class="btn-main">➕ Enregistrer une absence / retard</button>
+            <div class="flex gap-2">
+                <select id="absenceClassSelect" onchange="filterAbsences()" class="input-std text-xs">
+                    <option value="">-- Toutes les classes --</option>
+                </select>
+                <input type="date" id="absenceDateInput" onchange="filterAbsences()" class="input-std text-xs">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Élève</th>
+                        <th class="p-3">Classe</th>
+                        <th class="p-3">Type</th>
+                        <th class="p-3">Date</th>
+                        <th class="p-3">Motif</th>
+                        <th class="p-3">Justifié</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="absenceTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="import-export-card">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">📁 Importation & Exportation (Absences)</h3>
+            <div class="flex flex-wrap items-center gap-3">
+                <input type="file" id="absenceImportFile" accept=".csv, .xlsx" class="text-xs">
+                <button onclick="previewAbsenceImport()" class="btn-main text-xs">📥 Importer</button>
+                <div class="ml-auto flex gap-2">
+                    <button onclick="exportAbsenceBilan('pdf')" class="btn-sec text-xs">📄 Exporter Bilan PDF</button>
+                    <button onclick="exportAbsenceBilan('xlsx')" class="btn-sec text-xs">📊 Exporter Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="caisse" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">💰 Gestion de la Caisse & Règlement Scolaire</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button onclick="openCashierModal()" class="btn-main">➕ Enregistrer une transaction</button>
+            <input type="text" id="searchCash" onkeyup="filterCash()" placeholder="🔍 Rechercher N° reçu, élève..." class="input-std max-w-xs">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800">
+                <span class="text-xs font-bold uppercase block">Total Recettes</span>
+                <span id="totalRevenue" class="text-xl font-extrabold">0 FCFA</span>
+            </div>
+            <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800">
+                <span class="text-xs font-bold uppercase block">Total Dépenses</span>
+                <span id="totalExpense" class="text-xl font-extrabold">0 FCFA</span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">N° Reçu / Date</th>
+                        <th class="p-3">Type</th>
+                        <th class="p-3">Montant</th>
+                        <th class="p-3">Description</th>
+                        <th class="p-3">Élève / Concerne</th>
+                        <th class="p-3">Auteur</th>
+                        <th class="p-3">Actions & Reçus</th>
+                    </tr>
+                </thead>
+                <tbody id="cashTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="import-export-card">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">📁 Importation & Exportation (Caisse)</h3>
+            <div class="flex flex-wrap items-center gap-3">
+                <input type="file" id="cashImportFile" accept=".csv, .xlsx" class="text-xs">
+                <button onclick="previewCashImport()" class="btn-main text-xs">📥 Importer</button>
+                <div class="ml-auto flex gap-2">
+                    <button onclick="exportCashJournal('pdf')" class="btn-sec text-xs">📄 Journal Caisse PDF</button>
+                    <button onclick="exportCashJournal('xlsx')" class="btn-sec text-xs">📊 Journal Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="enseignants" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">👨‍🏫 Corps Enseignant</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button id="btnAddTeacher" onclick="openTeacherModal()" class="btn-main">➕ Ajouter un enseignant</button>
+            <input type="text" id="searchTeacher" onkeyup="filterTeachers()" placeholder="🔍 Rechercher..." class="input-std max-w-xs">
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Nom & Prénom</th>
+                        <th class="p-3">Spécialité / Discipline</th>
+                        <th class="p-3">Classes Enseignées</th>
+                        <th class="p-3">Téléphone</th>
+                        <th class="p-3">Email</th>
+                        <th class="p-3">Statut</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="teacherTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="devoirs" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">📖 Devoirs & Exercices</h2>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button onclick="openHomeworkModal()" class="btn-main">➕ Attribuer un devoir</button>
+            <select id="homeworkClassSelect" onchange="filterHomework()" class="input-std max-w-xs">
+                <option value="">-- Toutes les classes --</option>
+            </select>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Classe</th>
+                        <th class="p-3">Matière</th>
+                        <th class="p-3">Enseignant</th>
+                        <th class="p-3">Description</th>
+                        <th class="p-3">Date Donnée</th>
+                        <th class="p-3">Date Limite</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="homeworkTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="communications" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">💬 Communications & Rendez-vous</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 text-sm">📢 Annonces Officieuses</h3>
+                    <button onclick="openMessageModal()" class="btn-main text-xs">➕ Publier</button>
+                </div>
+                <div id="messagesFeed" class="space-y-3"></div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 text-sm">📅 Prises de Rendez-vous</h3>
+                    <button onclick="openAppointmentModal()" class="btn-sec text-xs">➕ Demander un RDV</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                <th class="p-2">Demandeur</th>
+                                <th class="p-2">Interlocuteur</th>
+                                <th class="p-2">Date & Heure</th>
+                                <th class="p-2">Motif</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="administration" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">🔐 Gestion du Personnel & Comptes d'Établissement</h2>
+        
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="openUserModal()" class="btn-main">➕ Créer un compte personnel</button>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Nom & Prénom</th>
+                        <th class="p-3">Email</th>
+                        <th class="p-3">Rôle</th>
+                        <th class="p-3">Statut</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="calendrier" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">📅 Calendrier de l'Établissement</h2>
+
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <button id="btnAddEvent" onclick="openEventModal()" class="btn-main">➕ Ajouter un événement</button>
+            <div class="flex gap-2">
+                <select id="eventTypeFilter" onchange="filterEvents()" class="input-std text-xs">
+                    <option value="">-- Tous les types --</option>
+                    <option value="Événement scolaire">Événement scolaire</option>
+                    <option value="Échéance administrative">Échéance administrative</option>
+                    <option value="Rendez-vous">Rendez-vous</option>
+                    <option value="Réunion">Réunion</option>
+                    <option value="Examen">Examen</option>
+                    <option value="Vacances / Congé">Vacances / Congé</option>
+                    <option value="Autre">Autre</option>
+                </select>
+                <input type="month" id="eventMonthFilter" onchange="filterEvents()" class="input-std text-xs">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <th class="p-3">Date</th>
+                        <th class="p-3">Heure</th>
+                        <th class="p-3">Titre</th>
+                        <th class="p-3">Type</th>
+                        <th class="p-3">Concerne</th>
+                        <th class="p-3">Détails</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="eventTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="import-export-card">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">📁 Importation & Exportation (Calendrier)</h3>
+            <div class="flex flex-wrap items-center gap-3">
+                <input type="file" id="eventImportFile" accept=".csv, .xlsx" class="text-xs">
+                <button onclick="previewEventImport()" class="btn-main text-xs">📥 Importer</button>
+                <div class="ml-auto flex gap-2">
+                    <button onclick="exportEventList('pdf')" class="btn-sec text-xs">📄 Exporter PDF</button>
+                    <button onclick="exportEventList('xlsx')" class="btn-sec text-xs">📊 Exporter Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="parametres" class="bg-white p-6 rounded-2xl shadow-md hidden">
+        <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b border-slate-100">⚙️ Paramètres & Synchronisation Cloud</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="font-bold text-slate-800 text-sm mb-3">👤 Profil Utilisateur Connecté</h3>
+                <div id="personalSettings"></div>
+            </div>
+
+            <div id="cloudSyncSection" class="p-5 bg-slate-50 border border-slate-200 rounded-xl">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-800 text-sm">☁️ Synchronisation Cloud Établissement (GitHub)</h3>
+                    <span id="settingsSyncBadge" class="badge badge-primary">Non configuré</span>
+                </div>
+                <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+                    Configurez le jeton GitHub d'accès pour synchroniser automatiquement les données de votre établissement.
+                </p>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Propriétaire GitHub</label>
+                        <input type="text" id="cloudOwner" class="input-std text-xs" placeholder="ex: CMBOUP">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Dépôt GitHub</label>
+                        <input type="text" id="cloudRepo" class="input-std text-xs" placeholder="ex: c2m-gestion-data">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Chemin du fichier JSON</label>
+                        <input type="text" id="cloudPath" class="input-std text-xs" value="data.json">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Branche</label>
+                        <input type="text" id="cloudBranch" class="input-std text-xs" value="main">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Jeton GitHub (PAT)</label>
+                        <input type="password" id="cloudToken" class="input-std text-xs" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="testCloudConnection()" class="btn-sec text-xs flex-1">🔍 Tester Connexion</button>
+                        <button onclick="saveCloudConfigFromSettings()" class="btn-main text-xs flex-1">💾 Enregistrer & Synchro</button>
+                    </div>
+
+                    <div id="cloudDiagnosticsBox" class="text-xs p-3 bg-white border border-slate-200 rounded-lg hidden mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="mt-auto py-4 text-center text-xs text-slate-100 font-medium opacity-80">
+    © 2026 C2M Gestion Scolaire. Tous droits réservés.
+</footer>
+
+<!-- MODAL DIRECTOR / EXPIRATION -->
+<div id="adminModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="adminModalTitle" class="text-lg font-bold text-slate-800 mb-4">Créer un Directeur / Établissement</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nom Complet du Directeur *</label>
+                <input type="text" id="newAdminName" class="input-std" placeholder="M. Sene">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nom de l'Établissement *</label>
+                <input type="text" id="newAdminSchool" class="input-std" placeholder="École C2M Unité 7">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Email / Identifiant *</label>
+                <input type="email" id="newAdminEmail" class="input-std" placeholder="directeur@c2m.sn">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Date d'Expiration de l'Abonnement *</label>
+                <input type="date" id="newAdminExpirationDate" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Fichier Synchro Cloud Dédié</label>
+                <input type="text" id="newAdminCloudPath" class="input-std" placeholder="ex: data_ecole_unite7.json">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Mot de Passe Fixe *</label>
+                <input type="text" id="newAdminFixedPassword" class="input-std" placeholder="ex: DIR2026">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeAdminModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveNewAdmin()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL SAISIE ÉLÈVE -->
+<div id="studentModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="studentModalTitle" class="text-lg font-bold text-slate-800 mb-4">Ajouter un Élève</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nom & Prénom de l'Élève *</label>
+                <input type="text" id="studentName" class="input-std" placeholder="Prénom et Nom">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Classe *</label>
+                <select id="studentClass" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Enseignant Référent / Associé</label>
+                <select id="studentTeacher" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Matricule</label>
+                <input type="text" id="studentMatricule" class="input-std" placeholder="Généré auto si vide">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nom du Parent / Tuteur Légal</label>
+                <input type="text" id="studentParent" class="input-std" placeholder="Nom du responsable">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Téléphone du Parent</label>
+                <input type="tel" id="studentPhone" class="input-std" placeholder="+221 ...">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeStudentModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveStudent()" class="btn-main">💾 Enregistrer Élève</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL SCHEDULE -->
+<div id="scheduleModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="scheduleModalTitle" class="text-lg font-bold text-slate-800 mb-4">Créer un Créneau</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Classe *</label>
+                <select id="scheduleClass" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Jour *</label>
+                <select id="scheduleDay" class="input-std">
+                    <option>Lundi</option><option>Mardi</option><option>Mercredi</option>
+                    <option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Début</label>
+                    <input type="time" id="scheduleStart" class="input-std" value="08:00">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Fin</label>
+                    <input type="time" id="scheduleEnd" class="input-std" value="10:00">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Matière *</label>
+                <input type="text" id="scheduleSubject" class="input-std" placeholder="ex: Mathématiques">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Enseignant</label>
+                <select id="scheduleTeacher" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Salle</label>
+                <input type="text" id="scheduleRoom" class="input-std" placeholder="ex: Salle 12">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeScheduleModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveSchedule()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL GRADE -->
+<div id="gradeModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="gradeModalTitle" class="text-lg font-bold text-slate-800 mb-4">Saisir une Note</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Élève *</label>
+                <select id="gradeStudent" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Matière *</label>
+                <input type="text" id="gradeSubject" class="input-std" placeholder="ex: Français">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Note (/20) *</label>
+                    <input type="number" id="gradeValue" class="input-std" step="0.25" min="0" max="20" placeholder="15.5">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Coefficient</label>
+                    <input type="number" id="gradeCoef" class="input-std" value="1" min="1" max="10">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Trimestre *</label>
+                <select id="gradeTerm" class="input-std">
+                    <option value="Trimestre 1">Trimestre 1</option>
+                    <option value="Trimestre 2">Trimestre 2</option>
+                    <option value="Trimestre 3">Trimestre 3</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Appréciation</label>
+                <input type="text" id="gradeComment" class="input-std" placeholder="Très bon travail...">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeGradeModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveGrade()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL LOGBOOK -->
+<div id="logbookModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="logbookModalTitle" class="text-lg font-bold text-slate-800 mb-4">Cahier de Textes</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Classe *</label>
+                <select id="logbookClass" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Matière *</label>
+                <input type="text" id="logbookSubject" class="input-std" placeholder="ex: Histoire">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Date</label>
+                    <input type="date" id="logbookDate" class="input-std">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Créneau</label>
+                    <input type="text" id="logbookTime" class="input-std" placeholder="08h00 - 09h00">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Contenu *</label>
+                <textarea id="logbookContent" class="input-std" rows="3"></textarea>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Devoirs</label>
+                <input type="text" id="logbookHomework" class="input-std">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeLogbookModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveLogbook()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ABSENCE -->
+<div id="absenceModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="absenceModalTitle" class="text-lg font-bold text-slate-800 mb-4">Absence / Retard</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Élève *</label>
+                <select id="absenceStudent" class="input-std"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Type *</label>
+                    <select id="absenceType" class="input-std">
+                        <option>Absence</option><option>Retard</option>
+                        <option>Dispense</option><option>Sanction</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+                    <input type="date" id="absenceDate" class="input-std">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Motif</label>
+                <input type="text" id="absenceReason" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Justifié ?</label>
+                <select id="absenceJustified" class="input-std">
+                    <option value="Non">Non</option><option value="Oui">Oui</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeAbsenceModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveAbsence()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EVENT -->
+<div id="eventModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="eventModalTitle" class="text-lg font-bold text-slate-800 mb-4">Événement Calendrier</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Titre *</label>
+                <input type="text" id="eventTitle" class="input-std">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+                    <input type="date" id="eventDate" class="input-std">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Heure</label>
+                    <input type="time" id="eventTime" class="input-std">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Type *</label>
+                <select id="eventType" class="input-std">
+                    <option value="Événement scolaire">Événement scolaire</option>
+                    <option value="Échéance administrative">Échéance administrative</option>
+                    <option value="Rendez-vous">Rendez-vous</option>
+                    <option value="Réunion">Réunion</option>
+                    <option value="Examen">Examen</option>
+                    <option value="Vacances / Congé">Vacances / Congé</option>
+                    <option value="Autre">Autre</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Concerne</label>
+                <input type="text" id="eventAudience" class="input-std" placeholder="Tous, CM2, Profs...">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Détails</label>
+                <textarea id="eventDetails" class="input-std" rows="3"></textarea>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeEventModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveEvent()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CASHIER -->
+<div id="cashierModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="cashierModalTitle" class="text-lg font-bold text-slate-800 mb-4">Transaction Caisse</h3>
+        <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Type *</label>
+                    <select id="cashType" class="input-std">
+                        <option value="entree">Entrée (Recette)</option>
+                        <option value="sortie">Sortie (Dépense)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">N° Reçu</label>
+                    <input type="text" id="cashRecuNum" class="input-std" readonly>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Montant (FCFA) *</label>
+                <input type="number" id="cashAmount" class="input-std" min="0">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Motif *</label>
+                <input type="text" id="cashDescription" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Élève Concerné</label>
+                <select id="cashStudent" class="input-std"></select>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeCashierModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveCashier()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL USER STAFF -->
+<div id="userModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="userModalTitle" class="text-lg font-bold text-slate-800 mb-4">Membre du Personnel</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nom *</label>
+                <input type="text" id="userNameInput" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Email *</label>
+                <input type="email" id="userEmailInput" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Rôle *</label>
+                <select id="userRoleSelect" class="input-std">
+                    <option value="enseignant">Enseignant</option>
+                    <option value="cpe">CPE</option>
+                    <option value="surveillance">Surveillant</option>
+                    <option value="comptable">Comptable</option>
+                    <option value="eleve">Élève / Parent</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Mot de Passe *</label>
+                <input type="text" id="userFixedPassword" class="input-std">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeUserModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveUser()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TEACHER -->
+<div id="teacherModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="teacherModalTitle" class="text-lg font-bold text-slate-800 mb-4">Ajouter un Enseignant</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nom & Prénom *</label>
+                <input type="text" id="teacherName" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Spécialité</label>
+                <input type="text" id="teacherSpecialty" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Classes</label>
+                <input type="text" id="teacherClasses" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Téléphone</label>
+                <input type="tel" id="teacherPhone" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                <input type="email" id="teacherEmail" class="input-std">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeTeacherModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveTeacher()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HOMEWORK -->
+<div id="homeworkModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="homeworkModalTitle" class="text-lg font-bold text-slate-800 mb-4">Attribuer un Devoir</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Classe *</label>
+                <select id="homeworkClass" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Matière *</label>
+                <input type="text" id="homeworkSubject" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Enseignant</label>
+                <select id="homeworkTeacher" class="input-std"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Description *</label>
+                <textarea id="homeworkDescription" class="input-std" rows="3"></textarea>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Date Limite *</label>
+                <input type="date" id="homeworkDeadline" class="input-std">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeHomeworkModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveHomework()" class="btn-main">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL MESSAGE -->
+<div id="messageModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Publier une Annonce</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Titre *</label>
+                <input type="text" id="messageTitle" class="input-std">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Priorité</label>
+                <select id="messagePriority" class="input-std">
+                    <option value="Normal">Normal</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Important">Important</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Contenu *</label>
+                <textarea id="messageContent" class="input-std" rows="4"></textarea>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeMessageModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveMessage()" class="btn-main">📢 Publier</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL APPOINTMENT -->
+<div id="appointmentModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Demande de Rendez-vous</h3>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Interlocuteur *</label>
+                <select id="appTargetUser" class="input-std"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Date</label>
+                    <input type="date" id="appDate" class="input-std">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Heure</label>
+                    <input type="time" id="appTime" class="input-std" value="10:00">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Motif *</label>
+                <textarea id="appReason" class="input-std" rows="3"></textarea>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeAppointmentModal()" class="btn-sec bg-slate-200 text-slate-800 hover:bg-slate-300">Annuler</button>
+            <button onclick="saveAppointment()" class="btn-main">📅 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const CLASSES = [
+        "Petite Section", "Moyenne Section", "Grande Section",
+        "CP", "CE1", "CE2", "CM1", "CM2",
+        "6ème", "5ème", "4ème", "3ème",
+        "Seconde", "Première", "Terminale"
+    ];
+
+    let users = [];
+    let students = [];
+    let schedules = [];
+    let grades = [];
+    let logbook = [];
+    let absences = [];
+    let cash = [];
+    let teachers = [];
+    let homework = [];
+    let messages = [];
+    let appointments = [];
+    let events = [];
+
+    let currentUser = null;
+    let currentTab = 'accueil';
+    let editingId = null;
+
+    const CREATOR_EMAIL = "coramboup72@gmail.com";
+
+    function loadDataFromStorage() {
+        users = JSON.parse(localStorage.getItem('c2mUsers')) || [];
+        students = JSON.parse(localStorage.getItem('c2mStudents')) || [];
+        schedules = JSON.parse(localStorage.getItem('c2mSchedules')) || [];
+        grades = JSON.parse(localStorage.getItem('c2mGrades')) || [];
+        logbook = JSON.parse(localStorage.getItem('c2mLogbook')) || [];
+        absences = JSON.parse(localStorage.getItem('c2mAbsences')) || [];
+        cash = JSON.parse(localStorage.getItem('c2mCash')) || [];
+        teachers = JSON.parse(localStorage.getItem('c2mTeachers')) || [];
+        homework = JSON.parse(localStorage.getItem('c2mHomework')) || [];
+        messages = JSON.parse(localStorage.getItem('c2mMessages')) || [];
+        appointments = JSON.parse(localStorage.getItem('c2mAppointments')) || [];
+        events = JSON.parse(localStorage.getItem('c2mEvents')) || [];
+    }
+
+    function saveDataToStorage(triggerSync = true) {
+        localStorage.setItem('c2mUsers', JSON.stringify(users));
+        localStorage.setItem('c2mStudents', JSON.stringify(students));
+        localStorage.setItem('c2mSchedules', JSON.stringify(schedules));
+        localStorage.setItem('c2mGrades', JSON.stringify(grades));
+        localStorage.setItem('c2mLogbook', JSON.stringify(logbook));
+        localStorage.setItem('c2mAbsences', JSON.stringify(absences));
+        localStorage.setItem('c2mCash', JSON.stringify(cash));
+        localStorage.setItem('c2mTeachers', JSON.stringify(teachers));
+        localStorage.setItem('c2mHomework', JSON.stringify(homework));
+        localStorage.setItem('c2mMessages', JSON.stringify(messages));
+        localStorage.setItem('c2mAppointments', JSON.stringify(appointments));
+        localStorage.setItem('c2mEvents', JSON.stringify(events));
+        localStorage.setItem('c2mLastLocalChange', String(Date.now()));
+
+        if (triggerSync) {
+            scheduleCloudPush();
+        }
+    }
+
+    window.onload = function() {
+        populateClassDropdowns();
+        loadDataFromStorage();
+        if (users.length === 0) {
+            initBootstrapAccounts();
+        }
+        initCloudSyncOnLoad();
+        updateClock();
+        setInterval(updateClock, 1000);
+    };
+
+    function updateClock() {
+        const el = document.getElementById('currentTime');
+        if (el) {
+            const now = new Date();
+            el.textContent = now.toLocaleString('fr-FR', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+        }
+    }
+
+    function showLoginAlert(msg, type) {
+        const box = document.getElementById('loginAlertMessage');
+        if (!box) return;
+        if (!msg) {
+            box.style.display = 'none';
+            box.className = 'alert-box';
+            return;
+        }
+        box.textContent = msg;
+        box.className = 'alert-box active ' + (type === 'error' ? 'alert-error' : 'alert-success');
+    }
+
+    function showAlert(msg, type) {
+        const box = document.getElementById('alertMessage');
+        if (!box) return;
+        if (!msg) {
+            box.style.display = 'none';
+            box.className = 'alert-box';
+            return;
+        }
+        box.textContent = msg;
+        box.className = 'alert-box active ' + (type === 'error' ? 'alert-error' : 'alert-success');
+        setTimeout(() => {
+            box.classList.remove('active');
+            box.style.display = 'none';
+        }, 4000);
+    }
+
+    function genId(prefix) {
+        return (prefix || 'ID') + '_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    }
+
+    function readTableFile(fileInputId) {
+        return new Promise((resolve, reject) => {
+            const input = document.getElementById(fileInputId);
+            if (!input || !input.files || !input.files[0]) { reject(new Error('Veuillez sélectionner un fichier CSV ou Excel.')); return; }
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    resolve(rows);
+                } catch (err) { reject(err); }
+            };
+            reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function pickCol(row, ...names) {
+        for (const n of names) {
+            if (row[n] !== undefined && row[n] !== '') return row[n];
+        }
+        return '';
+    }
+
+    function getDefaultExpirationDate() {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() + 1);
+        return d.toISOString().slice(0, 10);
+    }
+
+    function initBootstrapAccounts() {
+        const creatorPass = "CoraMaster2026!";
+
+        users = [
+            {
+                id: 'USR_CREATOR',
+                name: 'Cora Mboup',
+                email: CREATOR_EMAIL,
+                role: 'createur',
+                school: 'Direction Centrale C2M',
+                cloudPath: 'data_global.json',
+                expirationDate: '2099-12-31',
+                plainPassword: creatorPass,
+                codeHash: CryptoJS.SHA256(creatorPass).toString(),
+                status: 'actif'
+            },
+            {
+                id: 'USR_DIR_DEMO',
+                name: 'M. Sene',
+                email: 'directeur@c2m.sn',
+                role: 'directeur',
+                school: 'École C2M Unité 7',
+                cloudPath: 'data_ecole_unite7.json',
+                expirationDate: getDefaultExpirationDate(),
+                plainPassword: 'Directeur2026!',
+                codeHash: CryptoJS.SHA256('Directeur2026!').toString(),
+                status: 'actif'
+            },
+            {
+                id: 'USR_ENS_DEMO',
+                name: 'Mme Ndiaye',
+                email: 'enseignant@c2m.sn',
+                role: 'enseignant',
+                school: 'École C2M Unité 7',
+                expirationDate: getDefaultExpirationDate(),
+                plainPassword: 'Enseignant2026!',
+                codeHash: CryptoJS.SHA256('Enseignant2026!').toString(),
+                status: 'actif'
+            },
+            {
+                id: 'USR_ELEVE_DEMO',
+                name: 'Fatou Diop',
+                email: 'eleve@c2m.sn',
+                role: 'eleve',
+                school: 'École C2M Unité 7',
+                expirationDate: getDefaultExpirationDate(),
+                plainPassword: 'Eleve2026!',
+                codeHash: CryptoJS.SHA256('Eleve2026!').toString(),
+                status: 'actif'
+            },
+            {
+                id: 'USR_CPE_DEMO',
+                name: 'M. Fall',
+                email: 'cpe@c2m.sn',
+                role: 'cpe',
+                school: 'École C2M Unité 7',
+                expirationDate: getDefaultExpirationDate(),
+                plainPassword: 'Cpe2026!',
+                codeHash: CryptoJS.SHA256('Cpe2026!').toString(),
+                status: 'actif'
+            },
+            {
+                id: 'USR_SURV_DEMO',
+                name: 'Mme Ba',
+                email: 'surveillant@c2m.sn',
+                role: 'surveillance',
+                school: 'École C2M Unité 7',
+                expirationDate: getDefaultExpirationDate(),
+                plainPassword: 'Surveillant2026!',
+                codeHash: CryptoJS.SHA256('Surveillant2026!').toString(),
+                status: 'actif'
+            },
+            {
+                id: 'USR_COMPTA_DEMO',
+                name: 'M. Diallo',
+                email: 'comptable@c2m.sn',
+                role: 'comptable',
+                school: 'École C2M Unité 7',
+                expirationDate: getDefaultExpirationDate(),
+                plainPassword: 'Comptable2026!',
+                codeHash: CryptoJS.SHA256('Comptable2026!').toString(),
+                status: 'actif'
+            }
+        ];
+        saveDataToStorage(false);
+    }
+
+    function checkSchoolExpiration(user) {
+        if (!user || user.role === 'createur') return { expired: false };
+
+        const directorAcc = users.find(u => u.role === 'directeur' && u.school === user.school);
+        const expDateStr = (directorAcc && directorAcc.expirationDate) ? directorAcc.expirationDate : user.expirationDate;
+
+        if (!expDateStr) return { expired: false };
+
+        const today = new Date().toISOString().slice(0, 10);
+        if (today > expDateStr) {
+            return { expired: true, expDate: expDateStr };
+        }
+        return { expired: false, expDate: expDateStr };
+    }
+
+    function handleLogin(event) {
+        event.preventDefault();
+        showLoginAlert('', '');
+
+        const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        const pass = document.getElementById('passwordInput').value.trim();
+
+        if (!email || !pass) {
+            showLoginAlert("Veuillez remplir l'email et le mot de passe.", 'error');
+            return;
+        }
+
+        const storedUsers = JSON.parse(localStorage.getItem('c2mUsers')) || [];
+        if (storedUsers.length > 0) users = storedUsers;
+
+        const inputHash = CryptoJS.SHA256(pass).toString();
+        const user = users.find(u => u.email && u.email.trim().toLowerCase() === email);
+
+        if (!user) {
+            showLoginAlert("Compte introuvable avec cet email.", 'error');
+            return;
+        }
+
+        if (user.status && user.status !== 'actif') {
+            showLoginAlert("Ce compte est actuellement inactif ou bloqué.", 'error');
+            return;
+        }
+
+        const isPasswordCorrect = 
+            (user.plainPassword && user.plainPassword.trim() === pass) ||
+            (user.codeHash && user.codeHash === inputHash);
+
+        if (!isPasswordCorrect) {
+            showLoginAlert("Mot de passe / code d'accès incorrect.", 'error');
+            return;
+        }
+
+        const expCheck = checkSchoolExpiration(user);
+        if (expCheck.expired) {
+            showLoginAlert(`⚠️ L'accès pour l'établissement "${user.school}" a expiré le ${expCheck.expDate}. Veuillez contacter l'administrateur central pour étendre votre abonnement.`, 'error');
+            return;
+        }
+
+        currentUser = user;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').classList.remove('hidden');
+
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userRole').textContent = currentUser.role === 'createur' ? '🔑 Admin Central' : '📍 ' + (currentUser.school || 'Établissement');
+        document.getElementById('userSchool').textContent = currentUser.school || 'C2M';
+        
+        const badgeExp = document.getElementById('userExpirationBadge');
+        if (expCheck.expDate && currentUser.role === 'directeur') {
+            badgeExp.textContent = `Accès valide jusqu'au : ${expCheck.expDate}`;
+        } else {
+            badgeExp.textContent = '';
+        }
+
+        setupNavigation();
+        switchTab('accueil');
+        showAlert(`Bienvenue ${currentUser.name} !`, 'success');
+    }
+
+    function logout() {
+        currentUser = null;
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('loginScreen').style.display = 'block';
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('passwordInput').value = '';
+    }
+
+    function setupNavigation() {
+        const container = document.getElementById('navTabs');
+        container.innerHTML = '';
+
+        const ACCUEIL = { id: 'accueil', label: '🏠 Accueil' };
+        const CALENDRIER = { id: 'calendrier', label: '📅 Calendrier' };
+        const COMMUNICATIONS = { id: 'communications', label: '💬 Communications' };
+        const PARAMETRES = { id: 'parametres', label: '⚙️ Paramètres' };
+
+        let tabs = [];
+        switch (currentUser.role) {
+            case 'createur':
+                tabs = [
+                    ACCUEIL,
+                    { id: 'creatorMaster', label: '🛡️ Gestion Établissements & Expiration' },
+                    CALENDRIER,
+                    COMMUNICATIONS,
+                    { id: 'parametres', label: '⚙️ Paramètres & Cloud' }
+                ];
+                break;
+            case 'directeur':
+                tabs = [
+                    ACCUEIL,
+                    { id: 'eleves', label: '👥 Élèves' },
+                    { id: 'emplois', label: '⏰ Emplois du Temps' },
+                    { id: 'notes', label: '🎓 Notes & Bulletins' },
+                    { id: 'cahier', label: '📚 Cahier de Textes' },
+                    { id: 'absences', label: '📝 Absences / Discipline' },
+                    { id: 'caisse', label: '💰 Caisse' },
+                    { id: 'enseignants', label: '👨‍🏫 Enseignants' },
+                    { id: 'devoirs', label: '📖 Devoirs' },
+                    CALENDRIER,
+                    COMMUNICATIONS,
+                    { id: 'administration', label: '🔐 Personnel' },
+                    PARAMETRES
+                ];
+                break;
+            case 'comptable':
+                tabs = [
+                    ACCUEIL,
+                    { id: 'caisse', label: '💰 Caisse' },
+                    { id: 'eleves', label: '👥 Élèves (Consultation)' },
+                    { id: 'enseignants', label: '👨‍🏫 Personnel' },
+                    CALENDRIER,
+                    COMMUNICATIONS,
+                    PARAMETRES
+                ];
+                break;
+            case 'enseignant':
+                tabs = [
+                    ACCUEIL,
+                    { id: 'eleves', label: '👥 Mes Élèves' },
+                    { id: 'emplois', label: '⏰ Emploi du Temps' },
+                    { id: 'notes', label: '🎓 Bulletins' },
+                    { id: 'cahier', label: '📚 Cahier de Textes' },
+                    { id: 'absences', label: '📝 Absences' },
+                    { id: 'devoirs', label: '📖 Devoirs' },
+                    CALENDRIER,
+                    COMMUNICATIONS,
+                    PARAMETRES
+                ];
+                break;
+            case 'eleve':
+                tabs = [
+                    ACCUEIL,
+                    { id: 'emplois', label: '⏰ Mon Emploi du Temps' },
+                    { id: 'notes', label: '🎓 Mes Bulletins' },
+                    CALENDRIER,
+                    COMMUNICATIONS,
+                    PARAMETRES
+                ];
+                break;
+            case 'cpe':
+            case 'surveillance':
+                tabs = [
+                    ACCUEIL,
+                    { id: 'absences', label: '📝 Absences / Discipline' },
+                    CALENDRIER,
+                    COMMUNICATIONS,
+                    PARAMETRES
+                ];
+                break;
+            default:
+                tabs = [ACCUEIL, PARAMETRES];
+        }
+
+        tabs.forEach(tab => {
+            const btn = document.createElement('button');
+            btn.className = 'nav-tab-btn';
+            btn.textContent = tab.label;
+            btn.id = 'tab_btn_' + tab.id;
+            btn.onclick = () => switchTab(tab.id);
+            container.appendChild(btn);
+        });
+    }
+
+    function switchTab(tabId) {
+        currentTab = tabId;
+        document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('#dashboard > div[id]').forEach(div => {
+            if (div.id !== 'navTabs' && div.id !== 'alertMessage') div.classList.add('hidden');
+        });
+
+        const activeBtn = document.getElementById('tab_btn_' + tabId);
+        const activeSection = document.getElementById(tabId);
+
+        if (activeBtn) activeBtn.classList.add('active');
+        if (activeSection) activeSection.classList.remove('hidden');
+
+        refreshCurrentTab();
+    }
+
+    function populateClassDropdowns() {
+        const ids = ['studentClass', 'scheduleClass', 'absenceClassSelect', 'scheduleClassSelect', 'logbookClass', 'logbookClassFilter', 'homeworkClass', 'homeworkClassSelect', 'gradeClassFilter'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const currentVal = el.value;
+            el.innerHTML = id.includes('Filter') || id.includes('Select') ? '<option value="">-- Toutes les classes --</option>' : '<option value="">-- Sélectionner la classe --</option>';
+            CLASSES.forEach(c => {
+                el.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            if (currentVal) el.value = currentVal;
+        });
+    }
+
+    function isReadOnly(tabId) {
+        if (!currentUser) return true;
+        const role = currentUser.role;
+        if (role === 'createur' || role === 'directeur') return false;
+        if (tabId === 'eleves') return role === 'enseignant' || role === 'eleve' || role === 'cpe' || role === 'surveillance' || role === 'comptable';
+        if (tabId === 'emplois') return role === 'enseignant' || role === 'eleve' || role === 'cpe' || role === 'surveillance' || role === 'comptable';
+        if (tabId === 'notes') return role === 'eleve';
+        if (tabId === 'calendrier') return role !== 'directeur' && role !== 'createur';
+        return false;
+    }
+
+    function applyRoleRestrictions() {
+        if (!currentUser) return;
+        const addBtnMap = { eleves: 'btnAddStudent', emplois: 'btnAddSchedule', notes: 'btnAddGrade' };
+        Object.keys(addBtnMap).forEach(tabId => {
+            const btn = document.getElementById(addBtnMap[tabId]);
+            if (btn) btn.style.display = isReadOnly(tabId) ? 'none' : '';
+        });
+        const calBtn = document.getElementById('btnAddEvent');
+        if (calBtn) calBtn.style.display = isReadOnly('calendrier') ? 'none' : '';
+    }
+
+    function getSchoolStudents() {
+        if (!currentUser) return [];
+        if (currentUser.role === 'createur') return students;
+        let list = students.filter(s => !s.school || s.school === currentUser.school);
+        if (currentUser.role === 'enseignant') {
+            list = list.filter(s => s.teacherName === currentUser.name || s.teacherId === currentUser.id);
+        }
+        return list;
+    }
+
+    function populateStudentDropdowns(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = '<option value="">-- Sélectionner l\'élève --</option>';
+        getSchoolStudents().forEach(s => {
+            el.innerHTML += `<option value="${s.id}">${s.name} (${s.class})</option>`;
+        });
+    }
+
+    function populateTeacherDropdowns(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = '<option value="">-- Sélectionner l\'enseignant --</option>';
+        const list = currentUser && currentUser.role !== 'createur' ? teachers.filter(t => !t.school || t.school === currentUser.school) : teachers;
+        list.forEach(t => {
+            el.innerHTML += `<option value="${t.name}">${t.name} - ${t.specialty}</option>`;
+        });
+    }
+
+    function populateUserDropdowns(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = '<option value="">-- Sélectionner --</option>';
+        const list = users.filter(u => u.role !== 'createur' && (currentUser.role === 'createur' || u.school === currentUser.school));
+        list.forEach(u => {
+            el.innerHTML += `<option value="${u.name}">${u.name} (${u.role})</option>`;
+        });
+    }
+
+    function refreshCurrentTab() {
+        if (currentTab === 'accueil') renderDashboardStats();
+        else if (currentTab === 'creatorMaster') renderCreatorMaster();
+        else if (currentTab === 'eleves') renderStudents();
+        else if (currentTab === 'notes') renderGrades();
+        else if (currentTab === 'cahier') renderLogbook();
+        else if (currentTab === 'emplois') renderSchedules();
+        else if (currentTab === 'absences') renderAbsences();
+        else if (currentTab === 'caisse') renderCash();
+        else if (currentTab === 'enseignants') renderTeachers();
+        else if (currentTab === 'devoirs') renderHomework();
+        else if (currentTab === 'communications') renderCommunications();
+        else if (currentTab === 'administration') renderUsers();
+        else if (currentTab === 'calendrier') renderEvents();
+        else if (currentTab === 'parametres') renderPersonalSettings();
+    }
+
+    function renderDashboardStats() {
+        const grid = document.getElementById('statsGrid');
+        if (!grid) return;
+        const myStudents = getSchoolStudents();
+        const myTeachers = currentUser.role === 'createur' ? teachers : teachers.filter(t => !t.school || t.school === currentUser.school);
+        const myStaff = users.filter(u => u.role !== 'createur' && (currentUser.role === 'createur' || u.school === currentUser.school));
+
+        grid.innerHTML = `
+            <div class="p-5 bg-white border rounded-xl shadow-sm">
+                <small class="text-xs font-bold text-slate-500 uppercase">Élèves Inscrits</small>
+                <div class="text-2xl font-extrabold text-blue-900 mt-1">${myStudents.length}</div>
+            </div>
+            <div class="p-5 bg-white border rounded-xl shadow-sm">
+                <small class="text-xs font-bold text-slate-500 uppercase">Enseignants</small>
+                <div class="text-2xl font-extrabold text-emerald-600 mt-1">${myTeachers.length}</div>
+            </div>
+            <div class="p-5 bg-white border rounded-xl shadow-sm">
+                <small class="text-xs font-bold text-slate-500 uppercase">Classes Actives</small>
+                <div class="text-2xl font-extrabold text-amber-600 mt-1">${CLASSES.length}</div>
+            </div>
+            <div class="p-5 bg-white border rounded-xl shadow-sm">
+                <small class="text-xs font-bold text-slate-500 uppercase">Comptes Équipe</small>
+                <div class="text-2xl font-extrabold text-purple-600 mt-1">${myStaff.length}</div>
+            </div>
+        `;
+
+        const expBox = document.getElementById('schoolExpirationInfo');
+        const expText = document.getElementById('schoolExpirationText');
+        if (currentUser.role === 'directeur') {
+            const expCheck = checkSchoolExpiration(currentUser);
+            if (expCheck.expDate) {
+                expBox.classList.remove('hidden');
+                expText.textContent = `La licence d'utilisation pour "${currentUser.school}" est valide jusqu'au ${expCheck.expDate}.`;
+            } else expBox.classList.add('hidden');
+        } else {
+            expBox.classList.add('hidden');
+        }
+    }
+
+    function renderCreatorMaster() {
+        const tbody = document.getElementById('creatorAdminsTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const today = new Date().toISOString().slice(0, 10);
+
+        users.filter(u => u.role === 'directeur' || u.role === 'createur').forEach(u => {
+            const expDate = u.expirationDate || '2099-12-31';
+            const isExp = today > expDate && u.role !== 'createur';
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${u.name}</strong></td>
+                    <td class="p-3">${u.school}</td>
+                    <td class="p-3">${u.email}</td>
+                    <td class="p-3">
+                        ${u.role === 'createur' ? '<span class="badge badge-secondary">Permanente</span>' : `
+                        <div class="flex items-center gap-1">
+                            <input type="date" value="${expDate}" onchange="updateDirectorExpirationDate('${u.id}', this.value)" class="input-std text-xs py-1 px-2 w-32">
+                            ${isExp ? '<span class="badge badge-danger">Expiré</span>' : '<span class="badge badge-secondary">Valide</span>'}
+                        </div>
+                        `}
+                    </td>
+                    <td class="p-3">
+                        ${u.role !== 'createur' ? `
+                            <div class="flex gap-1">
+                                <button onclick="extendExpiration('${u.id}', 1)" class="btn-sec btn-table-action">+1 Mois</button>
+                                <button onclick="extendExpiration('${u.id}', 6)" class="btn-sec btn-table-action">+6 Mois</button>
+                                <button onclick="extendExpiration('${u.id}', 12)" class="btn-sec btn-table-action">+1 An</button>
+                            </div>
+                        ` : '—'}
+                    </td>
+                    <td class="p-3"><span class="badge ${u.status === 'actif' ? 'badge-secondary' : 'badge-danger'}">${u.status}</span></td>
+                    <td class="p-3">
+                        ${u.role !== 'createur' ? `
+                            <button onclick="editAdmin('${u.id}')" class="btn-sec btn-table-action">✏️</button>
+                            <button onclick="toggleUserStatus('${u.id}')" class="btn-sec btn-table-action">${u.status === 'actif' ? '🚫' : '✅'}</button>
+                            <button onclick="deleteAdmin('${u.id}')" class="btn-danger btn-table-action">🗑️</button>
+                        ` : '<em class="text-slate-400">Compte Protégé</em>'}
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function updateDirectorExpirationDate(id, newDate) {
+        const u = users.find(x => x.id === id);
+        if (u) {
+            u.expirationDate = newDate;
+            saveDataToStorage();
+            renderCreatorMaster();
+            showAlert(`Date d'expiration de ${u.school} mise à jour : ${newDate}`, 'success');
+        }
+    }
+
+    function extendExpiration(id, months) {
+        const u = users.find(x => x.id === id);
+        if (!u) return;
+        const currentExp = u.expirationDate ? new Date(u.expirationDate) : new Date();
+        const baseDate = isNaN(currentExp.getTime()) || currentExp < new Date() ? new Date() : currentExp;
+        baseDate.setMonth(baseDate.getMonth() + months);
+        u.expirationDate = baseDate.toISOString().slice(0, 10);
+        saveDataToStorage();
+        renderCreatorMaster();
+        showAlert(`Accès de ${u.school} étendu de ${months} mois (nouvelle échéance: ${u.expirationDate})`, 'success');
+    }
+
+    function openAdminModal() {
+        editingId = null;
+        document.getElementById('adminModalTitle').textContent = "Créer un Directeur / Établissement";
+        document.getElementById('newAdminName').value = '';
+        document.getElementById('newAdminSchool').value = '';
+        document.getElementById('newAdminEmail').value = '';
+        document.getElementById('newAdminExpirationDate').value = getDefaultExpirationDate();
+        document.getElementById('newAdminCloudPath').value = 'data_ecole_' + Date.now().toString().slice(-4) + '.json';
+        document.getElementById('newAdminFixedPassword').value = '';
+        document.getElementById('adminModal').classList.add('active');
+    }
+    function closeAdminModal() { document.getElementById('adminModal').classList.remove('active'); editingId = null; }
+
+    function editAdmin(id) {
+        const u = users.find(x => x.id === id);
+        if (!u) return;
+        editingId = id;
+        document.getElementById('adminModalTitle').textContent = "Modifier l'Établissement / Directeur";
+        document.getElementById('newAdminName').value = u.name;
+        document.getElementById('newAdminSchool').value = u.school;
+        document.getElementById('newAdminEmail').value = u.email;
+        document.getElementById('newAdminExpirationDate').value = u.expirationDate || getDefaultExpirationDate();
+        document.getElementById('newAdminCloudPath').value = u.cloudPath || 'data.json';
+        document.getElementById('newAdminFixedPassword').value = u.plainPassword || '';
+        document.getElementById('adminModal').classList.add('active');
+    }
+
+    function saveNewAdmin() {
+        const name = document.getElementById('newAdminName').value.trim();
+        const school = document.getElementById('newAdminSchool').value.trim();
+        const email = document.getElementById('newAdminEmail').value.trim().toLowerCase();
+        const pass = document.getElementById('newAdminFixedPassword').value.trim();
+        const expDate = document.getElementById('newAdminExpirationDate').value || getDefaultExpirationDate();
+        const cloudPath = document.getElementById('newAdminCloudPath').value.trim() || 'data.json';
+        if (!name || !email || !pass) { showAlert('Nom, Email et Mot de passe sont requis', 'error'); return; }
+
+        if (editingId) {
+            const u = users.find(x => x.id === editingId);
+            if (u) {
+                u.name = name;
+                u.school = school;
+                u.email = email;
+                u.expirationDate = expDate;
+                u.cloudPath = cloudPath;
+                u.plainPassword = pass;
+                u.codeHash = CryptoJS.SHA256(pass).toString();
+            }
+            showAlert('Administrateur et établissement modifiés', 'success');
+        } else {
+            users.push({
+                id: genId('USR'),
+                name, school, email,
+                expirationDate: expDate,
+                cloudPath,
+                role: 'directeur',
+                plainPassword: pass,
+                codeHash: CryptoJS.SHA256(pass).toString(),
+                status: 'actif'
+            });
+            showAlert('Établissement & Directeur créés avec succès !', 'success');
+        }
+        saveDataToStorage();
+        closeAdminModal();
+        renderCreatorMaster();
+    }
+
+    function deleteAdmin(id) {
+        if (!confirm('Voulez-vous vraiment supprimer cet établissement ?')) return;
+        users = users.filter(u => u.id !== id);
+        saveDataToStorage();
+        renderCreatorMaster();
+        showAlert('Établissement supprimé', 'success');
+    }
+
+    function renderStudents() {
+        const tbody = document.getElementById('studentTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const search = document.getElementById('searchStudent')?.value.toLowerCase() || '';
+        const myStudents = getSchoolStudents();
+        const list = myStudents.filter(s => !search || s.name.toLowerCase().includes(search) || s.matricule.toLowerCase().includes(search));
+        const readOnly = isReadOnly('eleves');
+        const isEnseignant = currentUser.role === 'enseignant';
+
+        list.forEach(s => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${s.matricule}</strong></td>
+                    <td class="p-3">${s.name}</td>
+                    <td class="p-3"><span class="badge badge-primary">${s.class}</span></td>
+                    <td class="p-3">${s.parent || '—'}</td>
+                    <td class="p-3">${s.phone || '—'}</td>
+                    <td class="p-3">
+                        ${isEnseignant ? '<span class="text-slate-400 font-medium">Consultation seule</span>' : `
+                        <button onclick="generateRegistrationPDF('${s.id}')" class="btn-sec btn-table-action" title="Fiche d'inscription PDF">📄 Fiche PDF</button>
+                        <button onclick="generateRegistrationWord('${s.id}')" class="btn-sec btn-table-action bg-blue-700 hover:bg-blue-800 text-white" title="Fiche d'inscription Word">📝 Fiche Word</button>
+                        ${readOnly ? '' : `
+                        <button onclick="editStudent('${s.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteStudent('${s.id}')" class="btn-danger btn-table-action">🗑️</button>
+                        `}
+                        `}
+                    </td>
+                </tr>
+            `;
+        });
+        populateStudentDropdowns('bulletinStudentSelect');
+        applyRoleRestrictions();
+    }
+
+    function generateRegistrationPDF(studentId) {
+        const s = students.find(x => x.id === studentId);
+        if (!s) return;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        doc.setFillColor(14, 42, 70);
+        doc.rect(10, 10, 190, 24, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(currentUser.school || 'ÉTABLISSEMENT SCOLAIRE', 105, 19, null, null, 'center');
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("PLATEFORME D'ENSEIGNEMENT ET DE GESTION ACADÉMIQUE", 105, 27, null, null, 'center');
+
+        doc.setTextColor(14, 42, 70);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("FICHE D'INSCRIPTION INDIVIDUELLE", 105, 42, null, null, 'center');
+        doc.setLineWidth(0.8);
+        doc.setDrawColor(14, 42, 70);
+        doc.line(15, 46, 195, 46);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(80, 80, 80);
+        doc.text(`Code Dossier : ${s.id}`, 15, 53);
+        doc.text(`Établi le : ${new Date().toLocaleDateString('fr-FR')}`, 150, 53);
+
+        doc.setLineWidth(0.3);
+        doc.setDrawColor(180, 180, 180);
+        doc.rect(155, 60, 35, 45);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text("PHOTO", 172, 83, null, null, 'center');
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(14, 42, 70);
+        doc.text("1. IDENTITÉ DE L'ÉLÈVE", 15, 63);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Nom & Prénom : ${s.name}`, 20, 72);
+        doc.text(`Matricule Officiel : ${s.matricule}`, 20, 80);
+        doc.text(`Classe d'Affectation : ${s.class}`, 20, 88);
+        doc.text(`Année Académique : ${new Date().getFullYear()} - ${new Date().getFullYear() + 1}`, 20, 96);
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(14, 42, 70);
+        doc.text("2. PARENT OU TUTEUR LÉGAL", 15, 115);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Nom du Responsable : ${s.parent || 'Non renseigné'}`, 20, 124);
+        doc.text(`Téléphone de Contact : ${s.phone || 'Non renseigné'}`, 20, 132);
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(14, 42, 70);
+        doc.text("3. VALIDATION ET DÉCISION ADMINISTRATIVE", 15, 150);
+
+        doc.setFontSize(9.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(60, 60, 60);
+        const textAgreement = "L'établissement certifie la conformité du dossier et la validation définitive de l'inscription de l'élève susmentionné pour l'année scolaire en cours.";
+        doc.text(doc.splitTextToSize(textAgreement, 175), 20, 158);
+
+        doc.setLineWidth(0.4);
+        doc.setDrawColor(14, 42, 70);
+        doc.rect(110, 185, 85, 50);
+        doc.setFontSize(9.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(14, 42, 70);
+        doc.text("Signature et Cachet du Directeur", 152.5, 193, null, null, 'center');
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(120, 120, 120);
+        doc.text("Document officiel généré par C2M Gestion Scolaire. Tous droits réservés.", 105, 285, null, null, 'center');
+
+        doc.save(`Fiche_Inscription_${s.name.replace(/\s+/g, '_')}.pdf`);
+        showAlert('Fiche d\'inscription PDF générée avec succès !', 'success');
+    }
+
+    function generateRegistrationWord(studentId) {
+        const s = students.find(x => x.id === studentId);
+        if (!s) return;
+
+        const htmlContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>Fiche d'Inscription</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 30px; color: #16232f; }
+                .header { background-color: #0E2A46; color: white; padding: 15px; text-align: center; }
+                .title { text-align: center; font-size: 18px; font-weight: bold; margin-top: 20px; color: #0E2A46; }
+                .section { font-size: 14px; font-weight: bold; margin-top: 25px; color: #0E2A46; border-bottom: 2px solid #0E2A46; padding-bottom: 4px; }
+                .field { margin: 10px 0; font-size: 12px; }
+                .signatures { margin-top: 50px; width: 100%; }
+                .sig-box { width: 50%; float: right; border: 1px solid #0E2A46; height: 110px; padding: 10px; text-align: center; font-size: 11px; }
+            </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h2>${currentUser.school || 'ÉTABLISSEMENT SCOLAIRE'}</h2>
+                    <p>PLATEFORME D'ENSEIGNEMENT ET DE GESTION ACADÉMIQUE</p>
+                </div>
+                <div class="title">FICHE D'INSCRIPTION INDIVIDUELLE</div>
+                <p style="text-align:right; font-size:10px;">Date : ${new Date().toLocaleDateString('fr-FR')}</p>
+
+                <div class="section">1. IDENTITÉ DE L'ÉLÈVE</div>
+                <div class="field"><b>Code Dossier :</b> ${s.id}</div>
+                <div class="field"><b>Nom & Prénom :</b> ${s.name}</div>
+                <div class="field"><b>Matricule Officiel :</b> ${s.matricule}</div>
+                <div class="field"><b>Classe :</b> ${s.class}</div>
+
+                <div class="section">2. PARENT OU TUTEUR LÉGAL</div>
+                <div class="field"><b>Nom du Responsable :</b> ${s.parent || 'Non renseigné'}</div>
+                <div class="field"><b>Téléphone :</b> ${s.phone || 'Non renseigné'}</div>
+
+                <div class="section">3. VALIDATION ET DÉCISION ADMINISTRATIVE</div>
+                <p style="font-size:11px;">L'établissement certifie la conformité du dossier et la validation définitive de l'inscription de l'élève susmentionné pour l'année scolaire en cours.</p>
+
+                <div class="signatures">
+                    <div class="sig-box"><b>Signature et Cachet du Directeur</b></div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Fiche_Inscription_${s.name.replace(/\s+/g, '_')}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showAlert('Fiche d\'inscription Word (.doc) générée !', 'success');
+    }
+
+    function openStudentModal() {
+        editingId = null;
+        populateClassDropdowns();
+        populateTeacherDropdowns('studentTeacher');
+        document.getElementById('studentModalTitle').textContent = 'Ajouter un Élève';
+        document.getElementById('studentName').value = '';
+        document.getElementById('studentMatricule').value = 'MAT-' + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('studentParent').value = '';
+        document.getElementById('studentPhone').value = '';
+        document.getElementById('studentTeacher').value = '';
+        document.getElementById('studentModal').classList.add('active');
+    }
+    function closeStudentModal() { document.getElementById('studentModal').classList.remove('active'); editingId = null; }
+
+    function editStudent(id) {
+        const s = students.find(x => x.id === id);
+        if (!s) return;
+        editingId = id;
+        populateClassDropdowns();
+        populateTeacherDropdowns('studentTeacher');
+        document.getElementById('studentModalTitle').textContent = 'Modifier un Élève';
+        document.getElementById('studentName').value = s.name;
+        document.getElementById('studentClass').value = s.class;
+        document.getElementById('studentMatricule').value = s.matricule;
+        document.getElementById('studentParent').value = s.parent || '';
+        document.getElementById('studentPhone').value = s.phone || '';
+        if (s.teacherName) document.getElementById('studentTeacher').value = s.teacherName;
+        document.getElementById('studentModal').classList.add('active');
+    }
+
+    function saveStudent() {
+        const name = document.getElementById('studentName').value.trim();
+        const cls = document.getElementById('studentClass').value;
+        const teacherName = document.getElementById('studentTeacher').value;
+        if (!name || !cls) { showAlert('Le nom et la classe sont requis', 'error'); return; }
+
+        if (editingId) {
+            const s = students.find(x => x.id === editingId);
+            if (s) {
+                s.name = name;
+                s.class = cls;
+                s.matricule = document.getElementById('studentMatricule').value;
+                s.parent = document.getElementById('studentParent').value;
+                s.phone = document.getElementById('studentPhone').value;
+                s.teacherName = teacherName;
+            }
+            showAlert('Élève mis à jour', 'success');
+        } else {
+            students.push({
+                id: genId('STU'),
+                name, class: cls,
+                school: currentUser.school,
+                matricule: document.getElementById('studentMatricule').value || 'MAT-' + Date.now().toString().slice(-4),
+                parent: document.getElementById('studentParent').value,
+                phone: document.getElementById('studentPhone').value,
+                teacherName: teacherName
+            });
+            showAlert('Élève enregistré', 'success');
+        }
+        saveDataToStorage();
+        closeStudentModal();
+        renderStudents();
+    }
+
+    function deleteStudent(id) {
+        if (!confirm('Supprimer cet élève ?')) return;
+        students = students.filter(s => s.id !== id);
+        saveDataToStorage();
+        renderStudents();
+        showAlert('Élève supprimé', 'success');
+    }
+
+    function filterStudents() { renderStudents(); }
+    function previewStudentImport() {
+        readTableFile('studentImportFile').then(rows => {
+            if (!rows.length) { showAlert('Aucune ligne détectée dans le fichier', 'error'); return; }
+            let count = 0;
+            rows.forEach(r => {
+                const name = pickCol(r, 'Nom & Prénom', 'Nom', 'name', 'Nom complet');
+                if (!name) return;
+                students.push({
+                    id: genId('STU'),
+                    school: currentUser.school,
+                    matricule: pickCol(r, 'Matricule', 'matricule') || genId('MAT'),
+                    name,
+                    class: pickCol(r, 'Classe', 'class') || CLASSES[0],
+                    parent: pickCol(r, 'Parents / Tuteurs', 'Parent', 'parent'),
+                    phone: pickCol(r, 'Téléphone', 'Phone', 'phone')
+                });
+                count++;
+            });
+            saveDataToStorage();
+            renderStudents();
+            showAlert(`${count} élève(s) importé(s) avec succès`, 'success');
+        }).catch(err => showAlert("Erreur d'import : " + err.message, 'error'));
+    }
+    function exportStudentList(format) {
+        const myStudents = getSchoolStudents();
+        const ws = XLSX.utils.json_to_sheet(myStudents);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Eleves');
+        XLSX.writeFile(wb, `Liste_Eleves.${format === 'pdf' ? 'xlsx' : format}`);
+    }
+
+    function renderSchedules() {
+        const tbody = document.getElementById('scheduleTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const clsFilter = document.getElementById('scheduleClassSelect')?.value;
+        const mySchedules = currentUser.role === 'createur' ? schedules : schedules.filter(s => !s.school || s.school === currentUser.school);
+        const list = mySchedules.filter(s => !clsFilter || s.class === clsFilter);
+        const readOnly = isReadOnly('emplois');
+        list.forEach(s => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><span class="badge badge-primary">${s.class}</span></td>
+                    <td class="p-3">${s.day}</td>
+                    <td class="p-3">${s.start} - ${s.end}</td>
+                    <td class="p-3"><strong>${s.subject}</strong></td>
+                    <td class="p-3">${s.teacher}</td>
+                    <td class="p-3">${s.room || '—'}</td>
+                    <td class="p-3">
+                        ${readOnly ? '<span class="text-slate-400">—</span>' : `
+                        <button onclick="editSchedule('${s.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteSchedule('${s.id}')" class="btn-danger btn-table-action">🗑️</button>
+                        `}
+                    </td>
+                </tr>
+            `;
+        });
+        applyRoleRestrictions();
+    }
+
+    function openScheduleModal() {
+        editingId = null;
+        populateClassDropdowns();
+        populateTeacherDropdowns('scheduleTeacher');
+        document.getElementById('scheduleModalTitle').textContent = "Créer un Créneau d'Emploi du Temps";
+        document.getElementById('scheduleSubject').value = '';
+        document.getElementById('scheduleRoom').value = '';
+        document.getElementById('scheduleModal').classList.add('active');
+    }
+    function closeScheduleModal() { document.getElementById('scheduleModal').classList.remove('active'); editingId = null; }
+
+    function editSchedule(id) {
+        const s = schedules.find(x => x.id === id);
+        if (!s) return;
+        editingId = id;
+        populateClassDropdowns();
+        populateTeacherDropdowns('scheduleTeacher');
+        document.getElementById('scheduleModalTitle').textContent = "Modifier un Créneau";
+        document.getElementById('scheduleClass').value = s.class;
+        document.getElementById('scheduleDay').value = s.day;
+        document.getElementById('scheduleStart').value = s.start;
+        document.getElementById('scheduleEnd').value = s.end;
+        document.getElementById('scheduleSubject').value = s.subject;
+        document.getElementById('scheduleTeacher').value = s.teacher;
+        document.getElementById('scheduleRoom').value = s.room || '';
+        document.getElementById('scheduleModal').classList.add('active');
+    }
+
+    function saveSchedule() {
+        const cls = document.getElementById('scheduleClass').value;
+        const subj = document.getElementById('scheduleSubject').value.trim();
+        if (!cls || !subj) { showAlert('La classe et la matière sont requises', 'error'); return; }
+
+        if (editingId) {
+            const s = schedules.find(x => x.id === editingId);
+            if (s) {
+                s.class = cls;
+                s.day = document.getElementById('scheduleDay').value;
+                s.start = document.getElementById('scheduleStart').value;
+                s.end = document.getElementById('scheduleEnd').value;
+                s.subject = subj;
+                s.teacher = document.getElementById('scheduleTeacher').value;
+                s.room = document.getElementById('scheduleRoom').value;
+            }
+            showAlert('Créneau modifié', 'success');
+        } else {
+            schedules.push({
+                id: genId('SCH'),
+                class: cls,
+                school: currentUser.school,
+                day: document.getElementById('scheduleDay').value,
+                start: document.getElementById('scheduleStart').value || '08:00',
+                end: document.getElementById('scheduleEnd').value || '10:00',
+                subject: subj,
+                teacher: document.getElementById('scheduleTeacher').value || 'Enseignant',
+                room: document.getElementById('scheduleRoom').value || 'Salle 1'
+            });
+            showAlert('Créneau d\'emploi du temps ajouté', 'success');
+        }
+        saveDataToStorage();
+        closeScheduleModal();
+        renderSchedules();
+    }
+
+    function deleteSchedule(id) {
+        if (!confirm('Supprimer ce créneau ?')) return;
+        schedules = schedules.filter(s => s.id !== id);
+        saveDataToStorage();
+        renderSchedules();
+        showAlert('Créneau supprimé', 'success');
+    }
+
+    function filterSchedules() { renderSchedules(); }
+    function previewScheduleImport() {
+        readTableFile('scheduleImportFile').then(rows => {
+            if (!rows.length) { showAlert('Aucune ligne détectée dans le fichier', 'error'); return; }
+            let count = 0;
+            rows.forEach(r => {
+                const cls = pickCol(r, 'Classe', 'class');
+                const subject = pickCol(r, 'Matière', 'subject');
+                if (!cls || !subject) return;
+                schedules.push({
+                    id: genId('SCH'),
+                    school: currentUser.school,
+                    class: cls,
+                    day: pickCol(r, 'Jour', 'day') || 'Lundi',
+                    start: pickCol(r, 'Début', 'start') || '08:00',
+                    end: pickCol(r, 'Fin', 'end') || '10:00',
+                    subject,
+                    teacher: pickCol(r, 'Enseignant', 'teacher') || 'Enseignant',
+                    room: pickCol(r, 'Salle', 'room') || 'Salle 1'
+                });
+                count++;
+            });
+            saveDataToStorage();
+            renderSchedules();
+            showAlert(`${count} créneau(x) importé(s) avec succès`, 'success');
+        }).catch(err => showAlert("Erreur d'import : " + err.message, 'error'));
+    }
+    function exportScheduleList(format) {
+        const mySchedules = currentUser.role === 'createur' ? schedules : schedules.filter(s => !s.school || s.school === currentUser.school);
+        const ws = XLSX.utils.json_to_sheet(mySchedules);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'EmploiDuTemps');
+        XLSX.writeFile(wb, `EmploiDuTemps.${format === 'pdf' ? 'xlsx' : format}`);
+    }
+
+    function renderGrades() {
+        const tbody = document.getElementById('gradeTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const clsFilter = document.getElementById('gradeClassFilter')?.value;
+        const termFilter = document.getElementById('gradeTermFilter')?.value;
+
+        const myGrades = currentUser.role === 'createur' ? grades : grades.filter(g => !g.school || g.school === currentUser.school);
+
+        let list = myGrades.filter(g => {
+            if (clsFilter && g.class !== clsFilter) return false;
+            if (termFilter && g.term !== termFilter) return false;
+            if (currentUser.role === 'eleve' && g.studentName !== currentUser.name) return false;
+            return true;
+        });
+
+        const readOnly = isReadOnly('notes');
+        list.forEach(g => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${g.studentName}</strong></td>
+                    <td class="p-3"><span class="badge badge-primary">${g.class}</span></td>
+                    <td class="p-3">${g.subject}</td>
+                    <td class="p-3"><strong>${g.valeur} / 20</strong></td>
+                    <td class="p-3">${g.coef}</td>
+                    <td class="p-3">${g.term}</td>
+                    <td class="p-3">${g.comment || '—'}</td>
+                    <td class="p-3">
+                        ${readOnly ? '<span class="text-slate-400">—</span>' : `
+                        <button onclick="editGrade('${g.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteGrade('${g.id}')" class="btn-danger btn-table-action">🗑️</button>
+                        `}
+                    </td>
+                </tr>
+            `;
+        });
+        applyRoleRestrictions();
+    }
+
+    function openGradeModal() {
+        editingId = null;
+        populateStudentDropdowns('gradeStudent');
+        document.getElementById('gradeModalTitle').textContent = "Saisir une Note d'Élève";
+        document.getElementById('gradeSubject').value = '';
+        document.getElementById('gradeValue').value = '15';
+        document.getElementById('gradeComment').value = '';
+        document.getElementById('gradeModal').classList.add('active');
+    }
+    function closeGradeModal() { document.getElementById('gradeModal').classList.remove('active'); editingId = null; }
+
+    function editGrade(id) {
+        const g = grades.find(x => x.id === id);
+        if (!g) return;
+        editingId = id;
+        populateStudentDropdowns('gradeStudent');
+        document.getElementById('gradeModalTitle').textContent = "Modifier la Note";
+        document.getElementById('gradeStudent').value = g.studentId;
+        document.getElementById('gradeSubject').value = g.subject;
+        document.getElementById('gradeValue').value = g.valeur;
+        document.getElementById('gradeCoef').value = g.coef;
+        document.getElementById('gradeTerm').value = g.term;
+        document.getElementById('gradeComment').value = g.comment || '';
+        document.getElementById('gradeModal').classList.add('active');
+    }
+
+    function saveGrade() {
+        const sId = document.getElementById('gradeStudent').value;
+        const student = students.find(s => s.id === sId);
+        if (!student) { showAlert('Veuillez sélectionner un élève', 'error'); return; }
+
+        if (editingId) {
+            const g = grades.find(x => x.id === editingId);
+            if (g) {
+                g.studentId = student.id;
+                g.studentName = student.name;
+                g.class = student.class;
+                g.subject = document.getElementById('gradeSubject').value.trim();
+                g.valeur = parseFloat(document.getElementById('gradeValue').value) || 0;
+                g.coef = parseInt(document.getElementById('gradeCoef').value) || 1;
+                g.term = document.getElementById('gradeTerm').value;
+                g.comment = document.getElementById('gradeComment').value.trim();
+            }
+            showAlert('Note mise à jour', 'success');
+        } else {
+            grades.push({
+                id: genId('GRD'),
+                studentId: student.id,
+                studentName: student.name,
+                class: student.class,
+                school: currentUser.school,
+                subject: document.getElementById('gradeSubject').value.trim() || 'Matière',
+                valeur: parseFloat(document.getElementById('gradeValue').value) || 0,
+                coef: parseInt(document.getElementById('gradeCoef').value) || 1,
+                term: document.getElementById('gradeTerm').value,
+                comment: document.getElementById('gradeComment').value.trim()
+            });
+            showAlert('Note enregistrée avec succès', 'success');
+        }
+        saveDataToStorage();
+        closeGradeModal();
+        renderGrades();
+    }
+
+    function deleteGrade(id) {
+        if (!confirm('Supprimer cette note ?')) return;
+        grades = grades.filter(g => g.id !== id);
+        saveDataToStorage();
+        renderGrades();
+        showAlert('Note supprimée', 'success');
+    }
+
+    function filterGrades() { renderGrades(); }
+
+    function generateStudentBulletinPDF() {
+        const sId = document.getElementById('bulletinStudentSelect').value;
+        const student = students.find(s => s.id === sId);
+        if (!student) { showAlert('Veuillez choisir un élève pour le bulletin', 'error'); return; }
+
+        const studentGrades = grades.filter(g => g.studentId === student.id);
+        if (studentGrades.length === 0) { showAlert('Aucune note saisie pour cet élève', 'error'); return; }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        doc.setFillColor(14, 42, 70);
+        doc.rect(10, 10, 190, 22, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(15);
+        doc.text(currentUser.school || 'C2M GESTION SCOLAIRE', 105, 18, null, null, 'center');
+        doc.setFontSize(10);
+        doc.text('BULLETIN TRIMESTRIEL DE NOTES', 105, 26, null, null, 'center');
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.rect(10, 36, 190, 22);
+        doc.text(`Élève : ${student.name}`, 14, 43);
+        doc.text(`Matricule : ${student.matricule}`, 14, 52);
+        doc.text(`Classe : ${student.class}`, 110, 43);
+        doc.text(`Année Scolaire : ${new Date().getFullYear()} - ${new Date().getFullYear() + 1}`, 110, 52);
+
+        let totalCoef = 0;
+        let totalPoints = 0;
+        const rows = studentGrades.map(g => {
+            const pts = (g.valeur * g.coef).toFixed(2);
+            totalCoef += g.coef;
+            totalPoints += (g.valeur * g.coef);
+            return [g.subject, g.term, `${g.valeur} / 20`, g.coef, `${pts}`, g.comment || '—'];
+        });
+
+        const generalAvg = totalCoef > 0 ? (totalPoints / totalCoef).toFixed(2) : '0.00';
+
+        doc.autoTable({
+            startY: 62,
+            head: [['Matière', 'Période', 'Note / 20', 'Coef', 'Total Pts', 'Appréciation']],
+            body: rows,
+            theme: 'grid',
+            headStyles: { fillColor: [14, 42, 70] },
+            styles: { fontSize: 9 }
+        });
+
+        const finalY = doc.lastAutoTable.finalY + 8;
+
+        doc.setFillColor(240, 244, 248);
+        doc.rect(10, finalY, 190, 16, 'F');
+        doc.setFontSize(12);
+        doc.setTextColor(14, 42, 70);
+        doc.text(`MOYENNE GÉNÉRALE : ${generalAvg} / 20`, 15, finalY + 11);
+        doc.text(`TOTAL COEFFICIENTS : ${totalCoef}`, 120, finalY + 11);
+
+        doc.rect(10, finalY + 22, 190, 45);
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text("Appréciation Générale du Conseil de Classe :", 15, finalY + 30);
+        doc.text(generalAvg >= 10 ? "Élève admis. Poursuivez les efforts !" : "Travail insuffisant. Des efforts sont requis.", 15, finalY + 38);
+
+        doc.line(100, finalY + 22, 100, finalY + 67);
+        doc.text("Signature du Professeur Principal", 105, finalY + 30);
+        doc.text("Cachet et Signature du Directeur", 150, finalY + 30);
+
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text("Bulletin officiel généré par C2M Gestion Scolaire. Tous droits réservés.", 105, 285, null, null, 'center');
+
+        doc.save(`Bulletin_${student.name.replace(/\s+/g, '_')}.pdf`);
+        showAlert('Bulletin PDF généré avec succès !', 'success');
+    }
+
+    function generateStudentBulletinWord() {
+        const sId = document.getElementById('bulletinStudentSelect').value;
+        const student = students.find(s => s.id === sId);
+        if (!student) { showAlert('Veuillez choisir un élève pour le bulletin', 'error'); return; }
+
+        const studentGrades = grades.filter(g => g.studentId === student.id);
+        if (studentGrades.length === 0) { showAlert('Aucune note saisie pour cet élève', 'error'); return; }
+
+        let totalCoef = 0;
+        let totalPoints = 0;
+        let rowsHtml = '';
+
+        studentGrades.forEach(g => {
+            const pts = (g.valeur * g.coef).toFixed(2);
+            totalCoef += g.coef;
+            totalPoints += (g.valeur * g.coef);
+            rowsHtml += `
+                <tr>
+                    <td style="padding:6px; border:1px solid #ccc;">${g.subject}</td>
+                    <td style="padding:6px; border:1px solid #ccc;">${g.term}</td>
+                    <td style="padding:6px; border:1px solid #ccc;"><b>${g.valeur} / 20</b></td>
+                    <td style="padding:6px; border:1px solid #ccc;">${g.coef}</td>
+                    <td style="padding:6px; border:1px solid #ccc;">${pts}</td>
+                    <td style="padding:6px; border:1px solid #ccc;">${g.comment || '—'}</td>
+                </tr>
+            `;
+        });
+
+        const generalAvg = totalCoef > 0 ? (totalPoints / totalCoef).toFixed(2) : '0.00';
+
+        const htmlContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>Bulletin de Notes</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { background-color: #0E2A46; color: white; padding: 12px; text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+                th { background-color: #0E2A46; color: white; padding: 8px; border: 1px solid #0E2A46; }
+            </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h2>${currentUser.school || 'C2M GESTION SCOLAIRE'}</h2>
+                    <p>BULLETIN TRIMESTRIEL DE NOTES</p>
+                </div>
+                <br>
+                <table style="border: 1px solid #ccc; font-size:12px;">
+                    <tr>
+                        <td style="padding:8px;"><b>Élève :</b> ${student.name}</td>
+                        <td style="padding:8px;"><b>Classe :</b> ${student.class}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;"><b>Matricule :</b> ${student.matricule}</td>
+                        <td style="padding:8px;"><b>Année :</b> ${new Date().getFullYear()} - ${new Date().getFullYear() + 1}</td>
+                    </tr>
+                </table>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Matière</th><th>Période</th><th>Note / 20</th><th>Coef</th><th>Total Pts</th><th>Appréciation</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+
+                <div style="background:#f0f4f8; padding:12px; margin-top:15px; font-size:14px; font-weight:bold; color:#0E2A46;">
+                    MOYENNE GÉNÉRALE : ${generalAvg} / 20 (Total Coef : ${totalCoef})
+                </div>
+
+                <div style="margin-top:40px; width:100%;">
+                    <div style="width:45%; float:left; border:1px solid #ccc; padding:10px; height:80px; font-size:11px;">
+                        <b>Professeur Principal</b>
+                    </div>
+                    <div style="width:45%; float:right; border:1px solid #ccc; padding:10px; height:80px; font-size:11px;">
+                        <b>Direction de l'Établissement</b>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Bulletin_${student.name.replace(/\s+/g, '_')}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showAlert('Bulletin Word (.doc) généré avec succès !', 'success');
+    }
+
+    function renderLogbook() {
+        const tbody = document.getElementById('logbookTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const clsFilter = document.getElementById('logbookClassFilter')?.value;
+        const myLogbook = currentUser.role === 'createur' ? logbook : logbook.filter(l => !l.school || l.school === currentUser.school);
+        const list = myLogbook.filter(l => !clsFilter || l.class === clsFilter);
+        list.forEach(l => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3">${l.date} (${l.time})</td>
+                    <td class="p-3"><span class="badge badge-primary">${l.class}</span></td>
+                    <td class="p-3"><strong>${l.subject}</strong></td>
+                    <td class="p-3">${l.teacher}</td>
+                    <td class="p-3">${l.content}</td>
+                    <td class="p-3">${l.homework || '—'}</td>
+                    <td class="p-3">
+                        <button onclick="editLogbook('${l.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteLogbook('${l.id}')" class="btn-danger btn-table-action">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openLogbookModal() {
+        editingId = null;
+        populateClassDropdowns();
+        document.getElementById('logbookModalTitle').textContent = "Saisir une Séance dans le Cahier de Textes";
+        document.getElementById('logbookDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('logbookSubject').value = '';
+        document.getElementById('logbookContent').value = '';
+        document.getElementById('logbookHomework').value = '';
+        document.getElementById('logbookModal').classList.add('active');
+    }
+    function closeLogbookModal() { document.getElementById('logbookModal').classList.remove('active'); editingId = null; }
+
+    function editLogbook(id) {
+        const l = logbook.find(x => x.id === id);
+        if (!l) return;
+        editingId = id;
+        populateClassDropdowns();
+        document.getElementById('logbookModalTitle').textContent = "Modifier la Séance";
+        document.getElementById('logbookClass').value = l.class;
+        document.getElementById('logbookSubject').value = l.subject;
+        document.getElementById('logbookDate').value = l.date;
+        document.getElementById('logbookTime').value = l.time;
+        document.getElementById('logbookContent').value = l.content;
+        document.getElementById('logbookHomework').value = l.homework || '';
+        document.getElementById('logbookModal').classList.add('active');
+    }
+
+    function saveLogbook() {
+        const cls = document.getElementById('logbookClass').value;
+        const subj = document.getElementById('logbookSubject').value.trim();
+        const content = document.getElementById('logbookContent').value.trim();
+        if (!cls || !subj || !content) { showAlert('Classe, Matière et Contenu sont requis', 'error'); return; }
+
+        if (editingId) {
+            const l = logbook.find(x => x.id === editingId);
+            if (l) {
+                l.class = cls;
+                l.subject = subj;
+                l.date = document.getElementById('logbookDate').value;
+                l.time = document.getElementById('logbookTime').value;
+                l.content = content;
+                l.homework = document.getElementById('logbookHomework').value.trim();
+            }
+            showAlert('Séance modifiée', 'success');
+        } else {
+            logbook.push({
+                id: genId('LOG'),
+                class: cls,
+                school: currentUser.school,
+                subject: subj,
+                date: document.getElementById('logbookDate').value,
+                time: document.getElementById('logbookTime').value || '08h-09h',
+                teacher: currentUser.name,
+                content: content,
+                homework: document.getElementById('logbookHomework').value.trim()
+            });
+            showAlert('Séance ajoutée au Cahier de Textes', 'success');
+        }
+        saveDataToStorage();
+        closeLogbookModal();
+        renderLogbook();
+    }
+
+    function deleteLogbook(id) {
+        if (!confirm('Supprimer cette séance ?')) return;
+        logbook = logbook.filter(l => l.id !== id);
+        saveDataToStorage();
+        renderLogbook();
+        showAlert('Entrée supprimée', 'success');
+    }
+
+    function filterLogbook() { renderLogbook(); }
+
+    function renderAbsences() {
+        const tbody = document.getElementById('absenceTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const clsFilter = document.getElementById('absenceClassSelect')?.value;
+        const dateFilter = document.getElementById('absenceDateInput')?.value;
+        const myAbsences = currentUser.role === 'createur' ? absences : absences.filter(a => !a.school || a.school === currentUser.school);
+
+        const list = myAbsences.filter(a => {
+            if (clsFilter && a.class !== clsFilter) return false;
+            if (dateFilter && a.date !== dateFilter) return false;
+            return true;
+        });
+        list.forEach(a => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${a.studentName}</strong></td>
+                    <td class="p-3"><span class="badge badge-primary">${a.class}</span></td>
+                    <td class="p-3">${a.type}</td>
+                    <td class="p-3">${a.date}</td>
+                    <td class="p-3">${a.reason || '—'}</td>
+                    <td class="p-3">${a.justified === 'Oui' ? '<span class="badge badge-secondary">Oui</span>' : '<span class="badge badge-danger">Non</span>'}</td>
+                    <td class="p-3">
+                        <button onclick="editAbsence('${a.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteAbsence('${a.id}')" class="btn-danger btn-table-action">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openAbsenceModal() {
+        editingId = null;
+        populateStudentDropdowns('absenceStudent');
+        document.getElementById('absenceModalTitle').textContent = "Enregistrer une Absence / Retard";
+        document.getElementById('absenceDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('absenceReason').value = '';
+        document.getElementById('absenceModal').classList.add('active');
+    }
+    function closeAbsenceModal() { document.getElementById('absenceModal').classList.remove('active'); editingId = null; }
+
+    function editAbsence(id) {
+        const a = absences.find(x => x.id === id);
+        if (!a) return;
+        editingId = id;
+        populateStudentDropdowns('absenceStudent');
+        document.getElementById('absenceModalTitle').textContent = "Modifier l'Absence / Retard";
+        document.getElementById('absenceStudent').value = a.studentId;
+        document.getElementById('absenceType').value = a.type;
+        document.getElementById('absenceDate').value = a.date;
+        document.getElementById('absenceReason').value = a.reason || '';
+        document.getElementById('absenceJustified').value = a.justified;
+        document.getElementById('absenceModal').classList.add('active');
+    }
+
+    function saveAbsence() {
+        const sId = document.getElementById('absenceStudent').value;
+        const student = students.find(s => s.id === sId);
+        if (!student) { showAlert('Veuillez sélectionner un élève', 'error'); return; }
+
+        if (editingId) {
+            const a = absences.find(x => x.id === editingId);
+            if (a) {
+                a.studentId = student.id;
+                a.studentName = student.name;
+                a.class = student.class;
+                a.date = document.getElementById('absenceDate').value;
+                a.type = document.getElementById('absenceType').value;
+                a.reason = document.getElementById('absenceReason').value;
+                a.justified = document.getElementById('absenceJustified').value;
+            }
+            showAlert('Absence modifiée', 'success');
+        } else {
+            absences.push({
+                id: genId('ABS'),
+                studentId: student.id,
+                studentName: student.name,
+                class: student.class,
+                school: currentUser.school,
+                date: document.getElementById('absenceDate').value,
+                type: document.getElementById('absenceType').value,
+                reason: document.getElementById('absenceReason').value,
+                justified: document.getElementById('absenceJustified').value
+            });
+            showAlert('Absence enregistrée', 'success');
+        }
+        saveDataToStorage();
+        closeAbsenceModal();
+        renderAbsences();
+    }
+
+    function deleteAbsence(id) {
+        if (!confirm('Supprimer cet enregistrement d\'absence ?')) return;
+        absences = absences.filter(a => a.id !== id);
+        saveDataToStorage();
+        renderAbsences();
+        showAlert('Absence supprimée', 'success');
+    }
+
+    function filterAbsences() { renderAbsences(); }
+    function previewAbsenceImport() {
+        readTableFile('absenceImportFile').then(rows => {
+            if (!rows.length) { showAlert('Aucune ligne détectée dans le fichier', 'error'); return; }
+            let count = 0;
+            rows.forEach(r => {
+                const studentName = pickCol(r, 'Élève', 'Eleve', 'name');
+                if (!studentName) return;
+                absences.push({
+                    id: genId('ABS'),
+                    school: currentUser.school,
+                    studentName,
+                    class: pickCol(r, 'Classe', 'class'),
+                    type: pickCol(r, 'Type', 'type') || 'Absence',
+                    date: pickCol(r, 'Date', 'date') || new Date().toISOString().slice(0, 10),
+                    reason: pickCol(r, 'Motif', 'reason'),
+                    justified: pickCol(r, 'Justifié', 'justified') || 'Non'
+                });
+                count++;
+            });
+            saveDataToStorage();
+            renderAbsences();
+            showAlert(`${count} entrée(s) importée(s) avec succès`, 'success');
+        }).catch(err => showAlert("Erreur d'import : " + err.message, 'error'));
+    }
+    function exportAbsenceBilan(format) {
+        const myAbsences = currentUser.role === 'createur' ? absences : absences.filter(a => !a.school || a.school === currentUser.school);
+        const ws = XLSX.utils.json_to_sheet(myAbsences);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Absences');
+        XLSX.writeFile(wb, `Absences_Bilan.${format === 'pdf' ? 'xlsx' : format}`);
+    }
+
+    function getSchoolEvents() {
+        if (!currentUser) return [];
+        if (currentUser.role === 'createur') return events;
+        return events.filter(e => !e.school || e.school === currentUser.school);
+    }
+
+    function renderEvents() {
+        const tbody = document.getElementById('eventTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const typeFilter = document.getElementById('eventTypeFilter')?.value;
+        const monthFilter = document.getElementById('eventMonthFilter')?.value;
+
+        let list = getSchoolEvents().filter(e => {
+            if (typeFilter && e.type !== typeFilter) return false;
+            if (monthFilter && (!e.date || !e.date.startsWith(monthFilter))) return false;
+            return true;
+        });
+        list.sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+
+        const readOnly = isReadOnly('calendrier');
+        list.forEach(e => {
+            const dateLabel = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${dateLabel}</strong></td>
+                    <td class="p-3">${e.time || '—'}</td>
+                    <td class="p-3"><strong>${e.title}</strong></td>
+                    <td class="p-3"><span class="badge badge-primary">${e.type}</span></td>
+                    <td class="p-3">${e.audience || 'Tous'}</td>
+                    <td class="p-3">${e.details || '—'}</td>
+                    <td class="p-3">
+                        ${readOnly ? '<span class="text-slate-400">—</span>' : `
+                        <button onclick="editEvent('${e.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteEvent('${e.id}')" class="btn-danger btn-table-action">🗑️</button>
+                        `}
+                    </td>
+                </tr>
+            `;
+        });
+        applyRoleRestrictions();
+    }
+
+    function openEventModal() {
+        if (isReadOnly('calendrier')) return;
+        editingId = null;
+        document.getElementById('eventModalTitle').textContent = "Ajouter un Événement";
+        document.getElementById('eventTitle').value = '';
+        document.getElementById('eventDate').value = '';
+        document.getElementById('eventTime').value = '';
+        document.getElementById('eventType').value = 'Événement scolaire';
+        document.getElementById('eventAudience').value = '';
+        document.getElementById('eventDetails').value = '';
+        document.getElementById('eventModal').classList.add('active');
+    }
+    function closeEventModal() { document.getElementById('eventModal').classList.remove('active'); editingId = null; }
+
+    function editEvent(id) {
+        if (isReadOnly('calendrier')) return;
+        const e = events.find(x => x.id === id);
+        if (!e) return;
+        editingId = id;
+        document.getElementById('eventModalTitle').textContent = "Modifier l'Événement";
+        document.getElementById('eventTitle').value = e.title;
+        document.getElementById('eventDate').value = e.date;
+        document.getElementById('eventTime').value = e.time || '';
+        document.getElementById('eventType').value = e.type;
+        document.getElementById('eventAudience').value = e.audience || '';
+        document.getElementById('eventDetails').value = e.details || '';
+        document.getElementById('eventModal').classList.add('active');
+    }
+
+    function saveEvent() {
+        if (isReadOnly('calendrier')) { showAlert("Vous n'avez pas les droits pour modifier le calendrier.", 'error'); return; }
+        const title = document.getElementById('eventTitle').value.trim();
+        const date = document.getElementById('eventDate').value;
+        if (!title || !date) { showAlert('Le titre et la date sont requis', 'error'); return; }
+
+        if (editingId) {
+            const e = events.find(x => x.id === editingId);
+            if (e) {
+                e.title = title;
+                e.date = date;
+                e.time = document.getElementById('eventTime').value;
+                e.type = document.getElementById('eventType').value;
+                e.audience = document.getElementById('eventAudience').value.trim();
+                e.details = document.getElementById('eventDetails').value.trim();
+            }
+            showAlert('Événement modifié', 'success');
+        } else {
+            events.push({
+                id: genId('EVT'),
+                school: currentUser.school,
+                title, date,
+                time: document.getElementById('eventTime').value,
+                type: document.getElementById('eventType').value,
+                audience: document.getElementById('eventAudience').value.trim(),
+                details: document.getElementById('eventDetails').value.trim()
+            });
+            showAlert('Événement ajouté au calendrier', 'success');
+        }
+        saveDataToStorage();
+        closeEventModal();
+        renderEvents();
+    }
+
+    function deleteEvent(id) {
+        if (isReadOnly('calendrier')) return;
+        if (!confirm('Supprimer cet événement ?')) return;
+        events = events.filter(e => e.id !== id);
+        saveDataToStorage();
+        renderEvents();
+        showAlert('Événement supprimé', 'success');
+    }
+
+    function filterEvents() { renderEvents(); }
+    function previewEventImport() {
+        readTableFile('eventImportFile').then(rows => {
+            if (!rows.length) { showAlert('Aucune ligne détectée dans le fichier', 'error'); return; }
+            let count = 0;
+            rows.forEach(r => {
+                const title = pickCol(r, 'Titre', 'title');
+                const date = pickCol(r, 'Date', 'date');
+                if (!title || !date) return;
+                events.push({
+                    id: genId('EVT'),
+                    school: currentUser.school,
+                    title,
+                    date,
+                    time: pickCol(r, 'Heure', 'time'),
+                    type: pickCol(r, 'Type', 'type') || 'Autre',
+                    audience: pickCol(r, 'Concerne', 'audience'),
+                    details: pickCol(r, 'Détails', 'details')
+                });
+                count++;
+            });
+            saveDataToStorage();
+            renderEvents();
+            showAlert(`${count} événement(s) importé(s) avec succès`, 'success');
+        }).catch(err => showAlert("Erreur d'import : " + err.message, 'error'));
+    }
+    function exportEventList(format) {
+        const myEvents = getSchoolEvents();
+        const ws = XLSX.utils.json_to_sheet(myEvents);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Calendrier');
+        XLSX.writeFile(wb, `Calendrier.${format === 'pdf' ? 'xlsx' : format}`);
+    }
+
+    function renderCash() {
+        const tbody = document.getElementById('cashTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const search = document.getElementById('searchCash')?.value.toLowerCase() || '';
+        let totalRev = 0, totalExp = 0;
+        const myCash = currentUser.role === 'createur' ? cash : cash.filter(c => !c.school || c.school === currentUser.school);
+
+        const list = myCash.filter(c => {
+            if (search) {
+                return (c.recuNum && c.recuNum.toLowerCase().includes(search)) ||
+                       (c.description && c.description.toLowerCase().includes(search)) ||
+                       (c.studentName && c.studentName.toLowerCase().includes(search));
+            }
+            return true;
+        });
+        list.forEach(c => {
+            if (c.type === 'entree') totalRev += Number(c.amount);
+            else totalExp += Number(c.amount);
+
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${c.recuNum || 'N/A'}</strong><br><small>${c.date}</small></td>
+                    <td class="p-3"><span class="badge ${c.type === 'entree' ? 'badge-secondary' : 'badge-danger'}">${c.type === 'entree' ? 'Recette' : 'Dépense'}</span></td>
+                    <td class="p-3"><strong>${Number(c.amount).toLocaleString('fr-FR')} FCFA</strong></td>
+                    <td class="p-3">${c.description}</td>
+                    <td class="p-3">${c.studentName || '—'}</td>
+                    <td class="p-3">${c.cashierName || '—'}</td>
+                    <td class="p-3">
+                        <button onclick="downloadReceiptPDF('${c.id}')" class="btn-sec btn-table-action" title="Format Reçu Standard PDF">🧾 Reçu PDF</button>
+                        <button onclick="downloadReceiptWord('${c.id}')" class="btn-sec btn-table-action bg-blue-700 hover:bg-blue-800 text-white" title="Format Reçu Standard Word">📝 Reçu Word</button>
+                        <button onclick="editCash('${c.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteCash('${c.id}')" class="btn-danger btn-table-action">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        document.getElementById('totalRevenue').textContent = totalRev.toLocaleString('fr-FR') + ' FCFA';
+        document.getElementById('totalExpense').textContent = totalExp.toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function downloadReceiptPDF(cashId) {
+        const item = cash.find(c => c.id === cashId);
+        if (!item) return;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 160] });
+
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(14, 42, 70);
+        doc.rect(2, 2, 76, 156);
+        doc.rect(3, 3, 74, 154);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(currentUser.school || 'ÉTABLISSEMENT SCOLAIRE', 40, 10, null, null, 'center');
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("REÇU DE CAISSE", 40, 15, null, null, 'center');
+        doc.text(`N° : ${item.recuNum || 'REC-001'}`, 40, 19, null, null, 'center');
+
+        doc.setLineWidth(0.3);
+        doc.line(6, 22, 74, 22);
+
+        doc.setFontSize(7.5);
+        doc.text(`Date : ${item.date}`, 6, 28);
+        doc.text(`Établi par : ${item.cashierName || 'Caisse'}`, 6, 33);
+        doc.text(`Nature : ${item.type === 'entree' ? 'Recette / Scolarité' : 'Dépense'}`, 6, 38);
+
+        doc.line(6, 42, 74, 42);
+
+        doc.text(`Bénéficiaire / Élève :`, 6, 48);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${item.studentName || 'Autre'}`, 6, 53);
+
+        doc.setFont("helvetica", "normal");
+        doc.text(`Motif / Description :`, 6, 60);
+        doc.text(doc.splitTextToSize(item.description || 'Règlement', 68), 6, 65);
+
+        doc.setFillColor(240, 244, 248);
+        doc.rect(6, 78, 68, 16, 'F');
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(`MONTANT :`, 40, 85, null, null, 'center');
+        doc.text(`${Number(item.amount).toLocaleString('fr-FR')} FCFA`, 40, 91, null, null, 'center');
+
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.rect(6, 102, 32, 25);
+        doc.text("Signature Payeur", 8, 107);
+
+        doc.rect(42, 102, 32, 25);
+        doc.text("Cachet Caisse", 44, 107);
+
+        doc.setFontSize(6);
+        doc.text("Merci pour votre confiance !", 40, 142, null, null, 'center');
+        doc.text("C2M Gestion Scolaire", 40, 148, null, null, 'center');
+
+        doc.save(`Recu_${item.recuNum || 'PAIEMENT'}.pdf`);
+        showAlert('Reçu PDF généré au format reçu standard !', 'success');
+    }
+
+    function downloadReceiptWord(cashId) {
+        const item = cash.find(c => c.id === cashId);
+        if (!item) return;
+
+        const htmlContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>Reçu de Caisse</title>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .receipt-box { width: 320px; border: 2px solid #0E2A46; padding: 15px; margin: 20px auto; }
+                .title { text-align: center; font-weight: bold; font-size: 14px; color: #0E2A46; }
+                .amount { background: #f0f4f8; font-size: 16px; font-weight: bold; text-align: center; padding: 10px; margin: 15px 0; border: 1px dashed #0E2A46; }
+                .field { font-size: 11px; margin: 6px 0; }
+            </style>
+            </head>
+            <body>
+                <div class="receipt-box">
+                    <div class="title">${currentUser.school || 'ÉTABLISSEMENT SCOLAIRE'}</div>
+                    <div style="text-align:center; font-size:11px;">REÇU DE CAISSE N° ${item.recuNum || 'REC-001'}</div>
+                    <hr>
+                    <div class="field"><b>Date :</b> ${item.date}</div>
+                    <div class="field"><b>Élève / Concerné :</b> ${item.studentName || 'Autre'}</div>
+                    <div class="field"><b>Motif :</b> ${item.description}</div>
+                    <div class="field"><b>Établi par :</b> ${item.cashierName || 'Service Caisse'}</div>
+
+                    <div class="amount">
+                        MONTANT : ${Number(item.amount).toLocaleString('fr-FR')} FCFA
+                    </div>
+
+                    <table style="width:100%; font-size:10px; margin-top:20px;">
+                        <tr>
+                            <td style="border:1px solid #ccc; height:60px; text-align:center; vertical-align:top;">Signature Payeur</td>
+                            <td style="border:1px solid #ccc; height:60px; text-align:center; vertical-align:top;">Cachet Caisse</td>
+                        </tr>
+                    </table>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Recu_Word_${item.recuNum || 'PAIEMENT'}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showAlert('Reçu Word (.doc) téléchargé !', 'success');
+    }
+
+    function openCashierModal() {
+        editingId = null;
+        populateStudentDropdowns('cashStudent');
+        document.getElementById('cashierModalTitle').textContent = "Enregistrer une Transaction de Caisse";
+        document.getElementById('cashRecuNum').value = 'REC-' + new Date().getFullYear() + '-' + Math.floor(100 + Math.random() * 900);
+        document.getElementById('cashAmount').value = '';
+        document.getElementById('cashDescription').value = '';
+        document.getElementById('cashierModal').classList.add('active');
+    }
+    function closeCashierModal() { document.getElementById('cashierModal').classList.remove('active'); editingId = null; }
+
+    function editCash(id) {
+        const c = cash.find(x => x.id === id);
+        if (!c) return;
+        editingId = id;
+        populateStudentDropdowns('cashStudent');
+        document.getElementById('cashierModalTitle').textContent = "Modifier la Transaction";
+        document.getElementById('cashType').value = c.type;
+        document.getElementById('cashRecuNum').value = c.recuNum;
+        document.getElementById('cashAmount').value = c.amount;
+        document.getElementById('cashDescription').value = c.description;
+        if (c.studentId) document.getElementById('cashStudent').value = c.studentId;
+        document.getElementById('cashierModal').classList.add('active');
+    }
+
+    function saveCashier() {
+        const amount = parseFloat(document.getElementById('cashAmount').value);
+        if (isNaN(amount) || amount <= 0) { showAlert('Le montant doit être valide', 'error'); return; }
+        const sId = document.getElementById('cashStudent').value;
+        const student = students.find(s => s.id === sId);
+
+        if (editingId) {
+            const c = cash.find(x => x.id === editingId);
+            if (c) {
+                c.type = document.getElementById('cashType').value;
+                c.amount = amount;
+                c.description = document.getElementById('cashDescription').value;
+                c.studentId = student ? student.id : null;
+                c.studentName = student ? student.name : 'Autre';
+            }
+            showAlert('Transaction modifiée', 'success');
+        } else {
+            cash.push({
+                id: genId('CSH'),
+                recuNum: document.getElementById('cashRecuNum').value,
+                type: document.getElementById('cashType').value,
+                amount: amount,
+                school: currentUser.school,
+                description: document.getElementById('cashDescription').value,
+                studentId: student ? student.id : null,
+                studentName: student ? student.name : 'Autre',
+                date: new Date().toISOString().slice(0, 10),
+                cashierName: currentUser.name
+            });
+            showAlert('Transaction enregistrée', 'success');
+        }
+        saveDataToStorage();
+        closeCashierModal();
+        renderCash();
+    }
+
+    function deleteCash(id) {
+        if (!confirm('Supprimer cette transaction ?')) return;
+        cash = cash.filter(c => c.id !== id);
+        saveDataToStorage();
+        renderCash();
+        showAlert('Transaction supprimée', 'success');
+    }
+
+    function filterCash() { renderCash(); }
+    function previewCashImport() {
+        readTableFile('cashImportFile').then(rows => {
+            if (!rows.length) { showAlert('Aucune ligne détectée dans le fichier', 'error'); return; }
+            let count = 0;
+            rows.forEach(r => {
+                const amount = parseFloat(pickCol(r, 'Montant', 'amount'));
+                if (isNaN(amount) || amount <= 0) return;
+                cash.push({
+                    id: genId('CSH'),
+                    recuNum: pickCol(r, 'N° Reçu', 'recuNum') || genId('REC'),
+                    type: pickCol(r, 'Type', 'type') || 'Entrée',
+                    amount,
+                    school: currentUser.school,
+                    description: pickCol(r, 'Description', 'Motif', 'description'),
+                    studentId: null,
+                    studentName: pickCol(r, 'Élève', 'studentName') || 'Autre',
+                    date: pickCol(r, 'Date', 'date') || new Date().toISOString().slice(0, 10),
+                    cashierName: currentUser.name
+                });
+                count++;
+            });
+            saveDataToStorage();
+            renderCash();
+            showAlert(`${count} transaction(s) importée(s) avec succès`, 'success');
+        }).catch(err => showAlert("Erreur d'import : " + err.message, 'error'));
+    }
+    function exportCashJournal(format) {
+        const myCash = currentUser.role === 'createur' ? cash : cash.filter(c => !c.school || c.school === currentUser.school);
+        const ws = XLSX.utils.json_to_sheet(myCash);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'JournalCaisse');
+        XLSX.writeFile(wb, `Journal_Caisse.${format === 'pdf' ? 'xlsx' : format}`);
+    }
+
+    function renderTeachers() {
+        const tbody = document.getElementById('teacherTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const search = document.getElementById('searchTeacher')?.value.toLowerCase() || '';
+        const myTeachers = currentUser.role === 'createur' ? teachers : teachers.filter(t => !t.school || t.school === currentUser.school);
+
+        const list = myTeachers.filter(t => !search || t.name.toLowerCase().includes(search) || t.specialty.toLowerCase().includes(search));
+        const readOnly = currentUser.role === 'comptable';
+        list.forEach(t => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${t.name}</strong></td>
+                    <td class="p-3">${t.specialty}</td>
+                    <td class="p-3">${t.classes}</td>
+                    <td class="p-3">${t.phone || '—'}</td>
+                    <td class="p-3">${t.email || '—'}</td>
+                    <td class="p-3"><span class="badge badge-secondary">Actif</span></td>
+                    <td class="p-3">
+                        ${readOnly ? '<span class="text-slate-400">—</span>' : `
+                        <button onclick="editTeacher('${t.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteTeacher('${t.id}')" class="btn-danger btn-table-action">🗑️</button>
+                        `}
+                    </td>
+                </tr>
+            `;
+        });
+        const addBtn = document.getElementById('btnAddTeacher');
+        if (addBtn) addBtn.style.display = readOnly ? 'none' : '';
+    }
+
+    function openTeacherModal() {
+        editingId = null;
+        document.getElementById('teacherModalTitle').textContent = "Ajouter un Enseignant";
+        document.getElementById('teacherName').value = '';
+        document.getElementById('teacherSpecialty').value = '';
+        document.getElementById('teacherClasses').value = '';
+        document.getElementById('teacherPhone').value = '';
+        document.getElementById('teacherEmail').value = '';
+        document.getElementById('teacherModal').classList.add('active');
+    }
+    function closeTeacherModal() { document.getElementById('teacherModal').classList.remove('active'); editingId = null; }
+
+    function editTeacher(id) {
+        const t = teachers.find(x => x.id === id);
+        if (!t) return;
+        editingId = id;
+        document.getElementById('teacherModalTitle').textContent = "Modifier l'Enseignant";
+        document.getElementById('teacherName').value = t.name;
+        document.getElementById('teacherSpecialty').value = t.specialty;
+        document.getElementById('teacherClasses').value = t.classes;
+        document.getElementById('teacherPhone').value = t.phone || '';
+        document.getElementById('teacherEmail').value = t.email || '';
+        document.getElementById('teacherModal').classList.add('active');
+    }
+
+    function saveTeacher() {
+        const name = document.getElementById('teacherName').value.trim();
+        if (!name) { showAlert('Le nom de l\'enseignant est requis', 'error'); return; }
+
+        if (editingId) {
+            const t = teachers.find(x => x.id === editingId);
+            if (t) {
+                t.name = name;
+                t.specialty = document.getElementById('teacherSpecialty').value || 'Général';
+                t.classes = document.getElementById('teacherClasses').value || 'Toutes';
+                t.phone = document.getElementById('teacherPhone').value;
+                t.email = document.getElementById('teacherEmail').value;
+            }
+            showAlert('Enseignant modifié', 'success');
+        } else {
+            teachers.push({
+                id: genId('TCH'),
+                name,
+                school: currentUser.school,
+                specialty: document.getElementById('teacherSpecialty').value || 'Général',
+                classes: document.getElementById('teacherClasses').value || 'Toutes',
+                phone: document.getElementById('teacherPhone').value,
+                email: document.getElementById('teacherEmail').value
+            });
+            showAlert('Enseignant enregistré', 'success');
+        }
+        saveDataToStorage();
+        closeTeacherModal();
+        renderTeachers();
+    }
+
+    function deleteTeacher(id) {
+        if (!confirm('Supprimer cet enseignant ?')) return;
+        teachers = teachers.filter(t => t.id !== id);
+        saveDataToStorage();
+        renderTeachers();
+        showAlert('Enseignant supprimé', 'success');
+    }
+    function filterTeachers() { renderTeachers(); }
+
+    function renderHomework() {
+        const tbody = document.getElementById('homeworkTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const clsFilter = document.getElementById('homeworkClassSelect')?.value;
+        const myHomework = currentUser.role === 'createur' ? homework : homework.filter(h => !h.school || h.school === currentUser.school);
+
+        const list = myHomework.filter(h => !clsFilter || h.class === clsFilter);
+        list.forEach(h => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><span class="badge badge-primary">${h.class}</span></td>
+                    <td class="p-3"><strong>${h.subject}</strong></td>
+                    <td class="p-3">${h.teacher}</td>
+                    <td class="p-3">${h.description}</td>
+                    <td class="p-3">${h.dateGiven || new Date().toISOString().slice(0, 10)}</td>
+                    <td class="p-3"><strong class="text-red-600">${h.deadline}</strong></td>
+                    <td class="p-3">
+                        <button onclick="editHomework('${h.id}')" class="btn-sec btn-table-action">✏️</button>
+                        <button onclick="deleteHomework('${h.id}')" class="btn-danger btn-table-action">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openHomeworkModal() {
+        editingId = null;
+        populateClassDropdowns();
+        populateTeacherDropdowns('homeworkTeacher');
+        document.getElementById('homeworkModalTitle').textContent = "Attribuer un Devoir";
+        document.getElementById('homeworkSubject').value = '';
+        document.getElementById('homeworkDescription').value = '';
+        document.getElementById('homeworkDeadline').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('homeworkModal').classList.add('active');
+    }
+    function closeHomeworkModal() { document.getElementById('homeworkModal').classList.remove('active'); editingId = null; }
+
+    function editHomework(id) {
+        const h = homework.find(x => x.id === id);
+        if (!h) return;
+        editingId = id;
+        populateClassDropdowns();
+        populateTeacherDropdowns('homeworkTeacher');
+        document.getElementById('homeworkModalTitle').textContent = "Modifier le Devoir";
+        document.getElementById('homeworkClass').value = h.class;
+        document.getElementById('homeworkSubject').value = h.subject;
+        document.getElementById('homeworkTeacher').value = h.teacher;
+        document.getElementById('homeworkDescription').value = h.description;
+        document.getElementById('homeworkDeadline').value = h.deadline;
+        document.getElementById('homeworkModal').classList.add('active');
+    }
+
+    function saveHomework() {
+        const cls = document.getElementById('homeworkClass').value;
+        const desc = document.getElementById('homeworkDescription').value.trim();
+        if (!cls || !desc) { showAlert('La classe et la description sont requises', 'error'); return; }
+
+        if (editingId) {
+            const h = homework.find(x => x.id === editingId);
+            if (h) {
+                h.class = cls;
+                h.subject = document.getElementById('homeworkSubject').value || 'Devoir';
+                h.teacher = document.getElementById('homeworkTeacher').value || currentUser.name;
+                h.description = desc;
+                h.deadline = document.getElementById('homeworkDeadline').value;
+            }
+            showAlert('Devoir modifié', 'success');
+        } else {
+            homework.push({
+                id: genId('HWK'),
+                class: cls,
+                school: currentUser.school,
+                subject: document.getElementById('homeworkSubject').value || 'Devoir',
+                teacher: document.getElementById('homeworkTeacher').value || currentUser.name,
+                description: desc,
+                dateGiven: new Date().toISOString().slice(0, 10),
+                deadline: document.getElementById('homeworkDeadline').value
+            });
+            showAlert('Devoir attribué', 'success');
+        }
+        saveDataToStorage();
+        closeHomeworkModal();
+        renderHomework();
+    }
+
+    function deleteHomework(id) {
+        if (!confirm('Supprimer ce devoir ?')) return;
+        homework = homework.filter(h => h.id !== id);
+        saveDataToStorage();
+        renderHomework();
+        showAlert('Devoir supprimé', 'success');
+    }
+    function filterHomework() { renderHomework(); }
+
+    function renderCommunications() {
+        const feed = document.getElementById('messagesFeed');
+        if (feed) {
+            feed.innerHTML = '';
+            const myMessages = currentUser.role === 'createur' ? messages : messages.filter(m => !m.school || m.school === currentUser.school);
+
+            myMessages.forEach(m => {
+                feed.innerHTML += `
+                    <div class="p-3 bg-slate-50 border rounded-lg">
+                        <div class="flex justify-between items-center mb-1">
+                            <h5 class="font-bold text-slate-800 text-xs">${m.title}</h5>
+                            <span class="badge ${m.priority === 'Urgent' ? 'badge-danger' : 'badge-primary'}">${m.priority}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mb-2">${m.content}</p>
+                        <div class="flex justify-between items-center">
+                            <small class="text-slate-400">Publié par ${m.author} le ${m.date}</small>
+                            <button onclick="deleteMessage('${m.id}')" class="btn-danger btn-table-action">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        const appBody = document.getElementById('appointmentsTableBody');
+        if (appBody) {
+            appBody.innerHTML = '';
+            const myAppointments = currentUser.role === 'createur' ? appointments : appointments.filter(a => !a.school || a.school === currentUser.school);
+
+            myAppointments.forEach(a => {
+                appBody.innerHTML += `
+                    <tr>
+                        <td class="p-2"><strong>${a.requester}</strong></td>
+                        <td class="p-2">${a.targetUser}</td>
+                        <td class="p-2">${a.date} ${a.time}</td>
+                        <td class="p-2">${a.reason}</td>
+                        <td class="p-2">
+                            <button onclick="deleteAppointment('${a.id}')" class="btn-danger btn-table-action">🗑️ Supprimer</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    function openMessageModal() {
+        document.getElementById('messageTitle').value = '';
+        document.getElementById('messageContent').value = '';
+        document.getElementById('messageModal').classList.add('active');
+    }
+    function closeMessageModal() { document.getElementById('messageModal').classList.remove('active'); }
+
+    function saveMessage() {
+        const title = document.getElementById('messageTitle').value.trim();
+        const content = document.getElementById('messageContent').value.trim();
+        if (!title || !content) { showAlert('Titre et contenu sont requis', 'error'); return; }
+        messages.push({
+            id: genId('MSG'),
+            title, content,
+            school: currentUser.school,
+            priority: document.getElementById('messagePriority').value,
+            author: currentUser.name,
+            date: new Date().toISOString().slice(0, 10)
+        });
+        saveDataToStorage();
+        closeMessageModal();
+        renderCommunications();
+        showAlert('Annonce publiée', 'success');
+    }
+
+    function deleteMessage(id) {
+        if (!confirm('Supprimer cette annonce ?')) return;
+        messages = messages.filter(m => m.id !== id);
+        saveDataToStorage();
+        renderCommunications();
+        showAlert('Message supprimé', 'success');
+    }
+
+    function openAppointmentModal() {
+        populateUserDropdowns('appTargetUser');
+        document.getElementById('appDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('appTime').value = '10:00';
+        document.getElementById('appReason').value = '';
+        document.getElementById('appointmentModal').classList.add('active');
+    }
+    function closeAppointmentModal() { document.getElementById('appointmentModal').classList.remove('active'); }
+
+    function saveAppointment() {
+        const target = document.getElementById('appTargetUser').value;
+        const reason = document.getElementById('appReason').value.trim();
+        if (!target || !reason) { showAlert('Veuillez remplir l\'interlocuteur et le motif', 'error'); return; }
+        appointments.push({
+            id: genId('APP'),
+            requester: currentUser.name,
+            school: currentUser.school,
+            targetUser: target,
+            date: document.getElementById('appDate').value,
+            time: document.getElementById('appTime').value,
+            reason: reason
+        });
+        saveDataToStorage();
+        closeAppointmentModal();
+        renderCommunications();
+        showAlert('Demande de rendez-vous envoyée', 'success');
+    }
+
+    function deleteAppointment(id) {
+        if (!confirm('Annuler ce rendez-vous ?')) return;
+        appointments = appointments.filter(a => a.id !== id);
+        saveDataToStorage();
+        renderCommunications();
+        showAlert('Rendez-vous annulé', 'success');
+    }
+
+    function renderUsers() {
+        const tbody = document.getElementById('userTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const mySchoolUsers = users.filter(u => u.role !== 'createur' && u.school === currentUser.school);
+
+        mySchoolUsers.forEach(u => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="p-3"><strong>${u.name}</strong></td>
+                    <td class="p-3">${u.email}</td>
+                    <td class="p-3"><span class="badge badge-primary">${u.role}</span></td>
+                    <td class="p-3"><span class="badge ${u.status === 'actif' ? 'badge-secondary' : 'badge-danger'}">${u.status}</span></td>
+                    <td class="p-3">
+                        <button onclick="editUser('${u.id}')" class="btn-sec btn-table-action">✏️ Modifier</button>
+                        <button onclick="toggleUserStatus('${u.id}')" class="btn-sec btn-table-action">${u.status === 'actif' ? '🚫 Bloquer' : '✅ Activer'}</button>
+                        <button onclick="deleteUser('${u.id}')" class="btn-danger btn-table-action">🗑️ Supprimer</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openUserModal() {
+        editingId = null;
+        document.getElementById('userModalTitle').textContent = "Créer un Membre du Personnel";
+        document.getElementById('userNameInput').value = '';
+        document.getElementById('userEmailInput').value = '';
+        document.getElementById('userFixedPassword').value = '';
+        document.getElementById('userModal').classList.add('active');
+    }
+    function closeUserModal() { document.getElementById('userModal').classList.remove('active'); editingId = null; }
+
+    function editUser(id) {
+        const u = users.find(x => x.id === id);
+        if (!u) return;
+        editingId = id;
+        document.getElementById('userModalTitle').textContent = "Modifier le Membre du Personnel";
+        document.getElementById('userNameInput').value = u.name;
+        document.getElementById('userEmailInput').value = u.email;
+        document.getElementById('userRoleSelect').value = u.role;
+        document.getElementById('userFixedPassword').value = u.plainPassword || '';
+        document.getElementById('userModal').classList.add('active');
+    }
+
+    function saveUser() {
+        const name = document.getElementById('userNameInput').value.trim();
+        const email = document.getElementById('userEmailInput').value.trim().toLowerCase();
+        const pass = document.getElementById('userFixedPassword').value.trim();
+        if (!name || !email || !pass) { showAlert('Nom, Email et Mot de passe sont requis', 'error'); return; }
+
+        if (editingId) {
+            const u = users.find(x => x.id === editingId);
+            if (u) {
+                u.name = name;
+                u.email = email;
+                u.role = document.getElementById('userRoleSelect').value;
+                u.plainPassword = pass;
+                u.codeHash = CryptoJS.SHA256(pass).toString();
+            }
+            showAlert('Membre du personnel mis à jour', 'success');
+        } else {
+            users.push({
+                id: genId('USR'),
+                name, email,
+                role: document.getElementById('userRoleSelect').value,
+                school: currentUser.school,
+                plainPassword: pass,
+                codeHash: CryptoJS.SHA256(pass).toString(),
+                status: 'actif'
+            });
+            showAlert('Membre du personnel créé avec succès !', 'success');
+        }
+        saveDataToStorage();
+        closeUserModal();
+        renderUsers();
+    }
+
+    function toggleUserStatus(id) {
+        const u = users.find(x => x.id === id);
+        if (!u) return;
+        u.status = u.status === 'actif' ? 'inactif' : 'actif';
+        saveDataToStorage();
+        renderUsers();
+        if (currentUser.role === 'createur') renderCreatorMaster();
+        showAlert(`Statut du compte mis à jour: ${u.status}`, 'success');
+    }
+
+    function deleteUser(id) {
+        if (!confirm('Supprimer cet utilisateur ?')) return;
+        users = users.filter(u => u.id !== id);
+        saveDataToStorage();
+        renderUsers();
+        showAlert('Utilisateur supprimé', 'success');
+    }
+
+    const ROLE_LABELS = {
+        createur: 'Administrateur Central',
+        directeur: 'Directeur / Directrice',
+        enseignant: 'Enseignant(e)',
+        eleve: 'Élève',
+        cpe: 'CPE (Vie Scolaire)',
+        surveillance: 'Surveillant(e)',
+        comptable: 'Comptable / Caissier(ère)'
+    };
+
+    function renderPersonalSettings() {
+        const div = document.getElementById('personalSettings');
+        if (!div || !currentUser) return;
+        div.innerHTML = `
+            <div class="p-4 bg-white border rounded-lg shadow-sm space-y-2 text-xs">
+                <p><strong>Nom :</strong> ${currentUser.name}</p>
+                <p><strong>Email :</strong> ${currentUser.email}</p>
+                <p><strong>Rôle :</strong> ${ROLE_LABELS[currentUser.role] || currentUser.role}</p>
+                <p><strong>Établissement :</strong> ${currentUser.school || 'École'}</p>
+                <p><strong>Fichier Cloud :</strong> <code>${currentUser.cloudPath || 'data.json'}</code></p>
+            </div>
+        `;
+
+        const syncSection = document.getElementById('cloudSyncSection');
+        if (syncSection) {
+            syncSection.style.display = (currentUser.role === 'directeur' || currentUser.role === 'createur') ? '' : 'none';
+        }
+
+        const cfg = getCloudConfig();
+        if (cfg) {
+            document.getElementById('cloudOwner').value = cfg.owner || '';
+            document.getElementById('cloudRepo').value = cfg.repo || '';
+            document.getElementById('cloudPath').value = currentUser.cloudPath || cfg.path || 'data.json';
+            document.getElementById('cloudBranch').value = cfg.branch || 'main';
+            document.getElementById('cloudToken').value = cfg.token || '';
+            document.getElementById('settingsSyncBadge').textContent = "Configuré";
+            document.getElementById('settingsSyncBadge').className = "badge badge-secondary";
+        }
+    }
+
+    let cloudPushTimer = null;
+
+    function cloudConfigKey() {
+        const scope = currentUser ? (currentUser.role === 'createur' ? 'GLOBAL' : currentUser.school) : 'GLOBAL';
+        return 'c2mCloudConfig_' + (scope || 'GLOBAL');
+    }
+
+    function getCloudConfig() {
+        try { return JSON.parse(localStorage.getItem(cloudConfigKey())) || null; }
+        catch (e) { return null; }
+    }
+
+    function saveCloudConfigFromSettings() {
+        const owner = document.getElementById('cloudOwner').value.trim();
+        const repo = document.getElementById('cloudRepo').value.trim();
+        const path = document.getElementById('cloudPath').value.trim() || (currentUser ? currentUser.cloudPath : 'data.json');
+        const branch = document.getElementById('cloudBranch').value.trim() || 'main';
+        const token = document.getElementById('cloudToken').value.trim();
+
+        if (!owner || !repo || !token) {
+            showAlert('Remplissez le propriétaire, dépôt et token GitHub', 'error');
+            return;
+        }
+
+        const cfg = { owner, repo, path, branch, token };
+        localStorage.setItem(cloudConfigKey(), JSON.stringify(cfg));
+
+        const badge = document.getElementById('settingsSyncBadge');
+        if (badge) {
+            badge.textContent = "Configuré";
+            badge.className = "badge badge-secondary";
+        }
+
+        showAlert('Configuration Cloud enregistrée ! Synchronisation vers GitHub en cours...', 'success');
+
+        pushCloudData().then(() => {
+            showAlert('✅ Données synchronisées avec succès sur GitHub !', 'success');
+            const box = document.getElementById('cloudDiagnosticsBox');
+            if (box) {
+                box.classList.remove('hidden');
+                box.innerHTML = '✅ Connexion et synchronisation réussies sur GitHub (' + new Date().toLocaleTimeString() + ')';
+            }
+        }).catch(err => {
+            showAlert('⚠️ Configuration enregistrée, mais erreur lors de l\'envoi : ' + err.message, 'error');
+            const box = document.getElementById('cloudDiagnosticsBox');
+            if (box) {
+                box.classList.remove('hidden');
+                box.innerHTML = '❌ Erreur de synchronisation : ' + err.message;
+            }
+        });
+    }
+
+    async function testCloudConnection() {
+        const cfg = {
+            owner: document.getElementById('cloudOwner').value.trim(),
+            repo: document.getElementById('cloudRepo').value.trim(),
+            token: document.getElementById('cloudToken').value.trim()
+        };
+        const box = document.getElementById('cloudDiagnosticsBox');
+        box.classList.remove('hidden');
+        box.innerHTML = '⏳ Vérification de la connexion GitHub...';
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`, {
+                headers: { 'Authorization': 'Bearer ' + cfg.token }
+            });
+            if (res.ok) {
+                box.innerHTML = '✅ Connexion réussie au dépôt GitHub !';
+            } else {
+                box.innerHTML = '❌ Échec de connexion. Vérifiez le token et le nom du dépôt.';
+            }
+        } catch (e) {
+            box.innerHTML = '❌ Erreur réseau : ' + e.message;
+        }
+    }
+
+    function buildDataBundle() {
+        return {
+            updatedAt: Date.now(),
+            school: currentUser ? currentUser.school : 'Global',
+            users, students, schedules, grades, logbook, absences, cash, teachers, homework, messages, appointments, events
+        };
+    }
+
+    function applyDataBundle(bundle) {
+        if (!bundle) return;
+        users = bundle.users || users;
+        students = bundle.students || students;
+        schedules = bundle.schedules || schedules;
+        grades = bundle.grades || grades;
+        logbook = bundle.logbook || logbook;
+        absences = bundle.absences || absences;
+        cash = bundle.cash || cash;
+        teachers = bundle.teachers || teachers;
+        events = bundle.events || events;
+        homework = bundle.homework || homework;
+        messages = bundle.messages || messages;
+        appointments = bundle.appointments || appointments;
+
+        saveDataToStorage(false);
+        refreshCurrentTab();
+    }
+
+    async function manualCloudSync() {
+        const cfg = getCloudConfig();
+        if (!cfg) return;
+        const targetPath = (currentUser && currentUser.cloudPath) ? currentUser.cloudPath : cfg.path;
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${targetPath}?ref=${cfg.branch}`, {
+                headers: { 'Authorization': 'Bearer ' + cfg.token }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+                const remoteBundle = JSON.parse(content);
+                const localTime = parseInt(localStorage.getItem('c2mLastLocalChange') || '0', 10);
+
+                if (remoteBundle.updatedAt > localTime) {
+                    applyDataBundle(remoteBundle);
+                } else if (remoteBundle.updatedAt < localTime) {
+                    pushCloudData();
+                }
+            } else if (res.status === 404) {
+                pushCloudData();
+            }
+        } catch (e) {
+            console.warn('Sync cloud error:', e);
+        }
+    }
+
+    async function pushCloudData() {
+        const cfg = getCloudConfig();
+        if (!cfg || !cfg.owner || !cfg.repo || !cfg.token) {
+            return;
+        }
+        const targetPath = (currentUser && currentUser.cloudPath) ? currentUser.cloudPath : cfg.path;
+
+        const bundle = buildDataBundle();
+        const contentStr = btoa(unescape(encodeURIComponent(JSON.stringify(bundle, null, 2))));
+
+        let sha = null;
+        const checkRes = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${targetPath}?ref=${cfg.branch}`, {
+            headers: { 'Authorization': 'Bearer ' + cfg.token }
+        });
+        if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            sha = checkData.sha;
+        }
+
+        const body = {
+            message: 'Synchronisation C2M (' + (currentUser ? currentUser.school : 'Data') + ')',
+            content: contentStr,
+            branch: cfg.branch
+        };
+        if (sha) body.sha = sha;
+
+        const pushRes = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${targetPath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': 'Bearer ' + cfg.token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!pushRes.ok) {
+            const errData = await pushRes.json();
+            throw new Error(errData.message || 'Erreur lors du transfert GitHub');
+        }
+    }
+
+    function scheduleCloudPush() {
+        if (cloudPushTimer) clearTimeout(cloudPushTimer);
+        cloudPushTimer = setTimeout(() => {
+            pushCloudData().catch(e => console.warn('Push error:', e));
+        }, 3000);
+    }
+
+    function initCloudSyncOnLoad() {
+        manualCloudSync();
+        setInterval(manualCloudSync, 30000);
+    }
+</script>
+</body>
+</html>
