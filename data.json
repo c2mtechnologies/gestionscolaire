@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1785962609312,
+  "updatedAt": 1785962789082,
   "school": "Global",
   "users": [
     {
@@ -33,8 +33,8 @@
       "role": "enseignant",
       "school": "École C2M Unité 7",
       "expirationDate": "2027-08-05",
-      "plainPassword": "Enseignant2026!",
-      "codeHash": "9d0c061a8178803b4ee37e8aa549ca8ee0aed9d49e9e2f702a94c7dc0b622f20",
+      "plainPassword": "Enseignant2024!",
+      "codeHash": "e80d309153c9c561666ce3f6b8c448f137b0421bd6091a1a17a660e8e81b3044",
       "status": "actif"
     },
     {
